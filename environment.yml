@@ -1,0 +1,19 @@
+name: movierec
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - scikit-learn
+  - pandas
+  - matplotlib
+  - scikit-surprise
+  - joblib
+  - seaborn
+  - requests
+  - streamlit
+  - ipykernel
+  - flask
+  - flask-cors
+  - jinja2
+prefix: C:\Users\nitin\miniconda3\envs\movierec
