@@ -6,6 +6,12 @@
     <h1>🎬 Movie Recommender</h1>
     <p class="subtitle">Tell us your favorite movies, and we'll find your next obsession!</p>
     
+    {% if error %}
+        <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            {{ error }}
+        </div>
+    {% endif %}
+    
     <form method="post" id="recommendation-form">
         {% csrf_token %}
         
@@ -17,11 +23,15 @@
                 placeholder="🔍 Search for movies you love..." 
                 autocomplete="off"
             >
+            <div id="search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 10px; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
         </div>
         
         <div class="selected-movies" id="selected-movies">
             <p style="color: #999;">Selected movies will appear here...</p>
         </div>
+        
+        <!-- Hidden inputs for selected movies -->
+        <div id="hidden-inputs"></div>
         
         <button type="submit" class="btn-recommend" id="recommend-btn" disabled>
             ✨ Get My Recommendations
@@ -33,49 +43,72 @@
     </form>
 
     <script>
-        // Basic JavaScript for movie selection (we'll enhance this in Step 4)
         const searchBox = document.getElementById('movie-search');
+        const searchResults = document.getElementById('search-results');
         const selectedMoviesDiv = document.getElementById('selected-movies');
+        const hiddenInputsDiv = document.getElementById('hidden-inputs');
         const recommendBtn = document.getElementById('recommend-btn');
         let selectedMovies = [];
+        let searchTimeout;
 
-        // Sample movies for testing (we'll replace with real data in Step 4)
-        const sampleMovies = [
-            'The Shawshank Redemption', 'The Godfather', 'The Dark Knight',
-            'Pulp Fiction', 'Forrest Gump', 'Inception', 'The Matrix',
-            'Goodfellas', 'The Lord of the Rings', 'Star Wars'
-        ];
-
+        // Real-time movie search
         searchBox.addEventListener('input', function() {
-            // Simple filtering for now - we'll enhance this in Step 4
-            const query = this.value.toLowerCase();
-            if (query.length > 2) {
-                console.log('Searching for:', query);
-                // TODO: Implement real search in Step 4
+            const query = this.value.trim();
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
             }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/search/?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displaySearchResults(data.movies);
+                    })
+                    .catch(error => {
+                        console.error('Search error:', error);
+                    });
+            }, 300);
         });
 
-        searchBox.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const movieTitle = this.value.trim();
-                if (movieTitle && !selectedMovies.includes(movieTitle)) {
-                    addMovie(movieTitle);
-                    this.value = '';
-                }
+        function displaySearchResults(movies) {
+            if (movies.length === 0) {
+                searchResults.style.display = 'none';
+                return;
             }
-        });
+            
+            searchResults.innerHTML = movies.map(movie => 
+                `<div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;" 
+                      onclick="selectMovie('${movie.replace(/'/g, "\\'")}')"
+                      onmouseover="this.style.backgroundColor='#f5f5f5'"
+                      onmouseout="this.style.backgroundColor='white'">
+                    ${movie}
+                </div>`
+            ).join('');
+            
+            searchResults.style.display = 'block';
+        }
 
-        function addMovie(title) {
-            selectedMovies.push(title);
-            updateSelectedMovies();
-            updateRecommendButton();
+        function selectMovie(title) {
+            if (!selectedMovies.includes(title)) {
+                selectedMovies.push(title);
+                updateSelectedMovies();
+                updateRecommendButton();
+                updateHiddenInputs();
+            }
+            
+            searchBox.value = '';
+            searchResults.style.display = 'none';
         }
 
         function removeMovie(title) {
             selectedMovies = selectedMovies.filter(movie => movie !== title);
             updateSelectedMovies();
             updateRecommendButton();
+            updateHiddenInputs();
         }
 
         function updateSelectedMovies() {
@@ -87,7 +120,7 @@
                 selectedMoviesDiv.innerHTML = selectedMovies.map(movie => 
                     `<span class="movie-tag">
                         ${movie}
-                        <span class="remove" onclick="removeMovie('${movie}')">&times;</span>
+                        <span class="remove" onclick="removeMovie('${movie.replace(/'/g, "\\'")}')">&times;</span>
                     </span>`
                 ).join('');
             }
@@ -96,5 +129,28 @@
         function updateRecommendButton() {
             recommendBtn.disabled = selectedMovies.length < 3;
         }
+
+        function updateHiddenInputs() {
+            hiddenInputsDiv.innerHTML = selectedMovies.map(movie => 
+                `<input type="hidden" name="selected_movies" value="${movie}">`
+            ).join('');
+        }
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
     </script>
+
+    <style>
+        .search-container {
+            position: relative;
+        }
+        
+        #search-results {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+    </style>
 {% endblock %}

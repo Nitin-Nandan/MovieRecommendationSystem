@@ -1,0 +1,74 @@
+{% extends 'movapp/base.html' %}
+
+{% block title %}Your Movie Recommendations{% endblock %}
+
+{% block content %}
+    <h1>🎬 Your Recommendations</h1>
+    <p class="subtitle">Based on your movie preferences</p>
+    
+    <div style="background: rgba(102, 126, 234, 0.1); padding: 20px; border-radius: 15px; margin-bottom: 30px;">
+        <h3 style="color: #333; margin-bottom: 15px;">📽️ Movies You Selected:</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            {% for movie in selected_movies %}
+                <span class="movie-tag" style="background: #28a745;">{{ movie }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+        <h3 style="color: #333; margin-bottom: 20px;">✨ Recommended for You:</h3>
+        
+        {% if recommendations %}
+            <div style="display: grid; gap: 15px;">
+                {% for movie in recommendations %}
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea; transition: transform 0.2s ease;" 
+                         onmouseover="this.style.transform='translateX(5px)'" 
+                         onmouseout="this.style.transform='translateX(0)'">
+                        <h4 style="margin: 0; color: #333;">{{ forloop.counter }}. {{ movie }}</h4>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #666; text-align: center; font-style: italic;">
+                No recommendations available at the moment. Please try again!
+            </p>
+        {% endif %}
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{% url 'home' %}" class="btn-recommend" style="text-decoration: none; display: inline-block;">
+            🔄 Try Different Movies
+        </a>
+    </div>
+
+    <style>
+        .movie-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .btn-recommend {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-recommend:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+{% endblock %}
