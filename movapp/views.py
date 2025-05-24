@@ -5,4 +5,8 @@ def home(request):
     """
     Homepage view for the Movie Recommendation System
     """
-    return HttpResponse("<h1>Welcome to Movie Recommendation System!</h1><p>Homepage is working!</p>")
+    if request.method == 'POST':
+        # We'll handle form submission in Step 5
+        return HttpResponse("Form submitted! (We'll process this in Step 5)")
+    
+    return render(request, 'movapp/home.html')

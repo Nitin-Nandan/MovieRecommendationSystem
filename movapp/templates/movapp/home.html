@@ -1,0 +1,100 @@
+{% extends 'movapp/base.html' %}
+
+{% block title %}Movie Recommendations - Find Your Next Favorite Film{% endblock %}
+
+{% block content %}
+    <h1>🎬 Movie Recommender</h1>
+    <p class="subtitle">Tell us your favorite movies, and we'll find your next obsession!</p>
+    
+    <form method="post" id="recommendation-form">
+        {% csrf_token %}
+        
+        <div class="search-container">
+            <input 
+                type="text" 
+                class="search-box" 
+                id="movie-search" 
+                placeholder="🔍 Search for movies you love..." 
+                autocomplete="off"
+            >
+        </div>
+        
+        <div class="selected-movies" id="selected-movies">
+            <p style="color: #999;">Selected movies will appear here...</p>
+        </div>
+        
+        <button type="submit" class="btn-recommend" id="recommend-btn" disabled>
+            ✨ Get My Recommendations
+        </button>
+        
+        <p class="instructions">
+            💡 Select at least 3 movies to get personalized recommendations
+        </p>
+    </form>
+
+    <script>
+        // Basic JavaScript for movie selection (we'll enhance this in Step 4)
+        const searchBox = document.getElementById('movie-search');
+        const selectedMoviesDiv = document.getElementById('selected-movies');
+        const recommendBtn = document.getElementById('recommend-btn');
+        let selectedMovies = [];
+
+        // Sample movies for testing (we'll replace with real data in Step 4)
+        const sampleMovies = [
+            'The Shawshank Redemption', 'The Godfather', 'The Dark Knight',
+            'Pulp Fiction', 'Forrest Gump', 'Inception', 'The Matrix',
+            'Goodfellas', 'The Lord of the Rings', 'Star Wars'
+        ];
+
+        searchBox.addEventListener('input', function() {
+            // Simple filtering for now - we'll enhance this in Step 4
+            const query = this.value.toLowerCase();
+            if (query.length > 2) {
+                console.log('Searching for:', query);
+                // TODO: Implement real search in Step 4
+            }
+        });
+
+        searchBox.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const movieTitle = this.value.trim();
+                if (movieTitle && !selectedMovies.includes(movieTitle)) {
+                    addMovie(movieTitle);
+                    this.value = '';
+                }
+            }
+        });
+
+        function addMovie(title) {
+            selectedMovies.push(title);
+            updateSelectedMovies();
+            updateRecommendButton();
+        }
+
+        function removeMovie(title) {
+            selectedMovies = selectedMovies.filter(movie => movie !== title);
+            updateSelectedMovies();
+            updateRecommendButton();
+        }
+
+        function updateSelectedMovies() {
+            if (selectedMovies.length === 0) {
+                selectedMoviesDiv.innerHTML = '<p style="color: #999;">Selected movies will appear here...</p>';
+                selectedMoviesDiv.classList.remove('has-movies');
+            } else {
+                selectedMoviesDiv.classList.add('has-movies');
+                selectedMoviesDiv.innerHTML = selectedMovies.map(movie => 
+                    `<span class="movie-tag">
+                        ${movie}
+                        <span class="remove" onclick="removeMovie('${movie}')">&times;</span>
+                    </span>`
+                ).join('');
+            }
+        }
+
+        function updateRecommendButton() {
+            recommendBtn.disabled = selectedMovies.length < 3;
+        }
+    </script>
+{% endblock %}
