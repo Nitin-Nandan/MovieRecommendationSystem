@@ -14,9 +14,9 @@ class MovieDataLoader:
         self.movies_df = None
         self.svd_model = None
         self.movie_titles = []
-        self._safe_user_id = None  # Cache for safe user ID
+        self._safe_user_id = None
         # TMDB API configuration
-        self.tmdb_api_key = "74cdb9b204e5c6f95ffc62fb7ea57b13"  # Your API key
+        self.tmdb_api_key = "74cdb9b204e5c6f95ffc62fb7ea57b13"
         self.tmdb_base_url = "https://api.themoviedb.org/3"
         self.tmdb_image_base_url = "https://image.tmdb.org/t/p/w500"
         self.setup_session()
@@ -50,6 +50,14 @@ class MovieDataLoader:
             # Load movies CSV
             movies_path = os.path.join(base_dir, 'ml-20m', 'movies.csv')
             self.movies_df = pd.read_csv(movies_path)
+            
+            # Extract year from title for filtering
+            self.movies_df['year'] = self.movies_df['title'].str.extract(r'\((\d{4})\)')
+            self.movies_df['year'] = pd.to_numeric(self.movies_df['year'], errors='coerce')
+            
+            # Create clean title without year
+            self.movies_df['clean_title'] = self.movies_df['title'].str.replace(r'\s*\(\d{4}\)', '', regex=True)
+            
             self.movie_titles = self.movies_df['title'].tolist()
             
             print(f"✅ Loaded {len(self.movies_df)} movies")
@@ -70,23 +78,70 @@ class MovieDataLoader:
             self.movies_df = pd.DataFrame({
                 'movieId': [1, 2, 3, 4, 5],
                 'title': ['The Shawshank Redemption (1994)', 'The Godfather (1972)', 'The Dark Knight (2008)', 'Pulp Fiction (1994)', 'Forrest Gump (1994)'],
-                'genres': ['Drama', 'Crime|Drama', 'Action|Crime|Drama', 'Crime|Drama', 'Comedy|Drama|Romance']
+                'genres': ['Drama', 'Crime|Drama', 'Action|Crime|Drama', 'Crime|Drama', 'Comedy|Drama|Romance'],
+                'year': [1994, 1972, 2008, 1994, 1994]
             })
             self.movie_titles = self.movies_df['title'].tolist()
             self.svd_model = None
+    
+    def apply_filters(self, movies_df, filters):
+        """Apply user filters to movies DataFrame using Pandas filtering"""
+        filtered_df = movies_df.copy()
+        
+        print(f"🔍 Applying filters: {filters}")
+        print(f"📊 Starting with {len(filtered_df)} movies")
+        
+        # Genre filtering using Pandas string contains
+        if filters.get('genres') and len(filters['genres']) > 0:
+            # Create pattern for multiple genres (OR logic)
+            genre_pattern = '|'.join(filters['genres'])
+            filtered_df = filtered_df[filtered_df['genres'].str.contains(genre_pattern, na=False, case=False)]
+            print(f"📊 After genre filter: {len(filtered_df)} movies")
+        
+        # Year range filtering
+        year_min = filters.get('year_min')
+        year_max = filters.get('year_max')
+        
+        if year_min or year_max:
+            if year_min:
+                filtered_df = filtered_df[filtered_df['year'] >= int(year_min)]
+            if year_max:
+                filtered_df = filtered_df[filtered_df['year'] <= int(year_max)]
+            print(f"📊 After year filter: {len(filtered_df)} movies")
+        
+        # Rating filtering (we'll simulate this based on predicted ratings)
+        min_rating = filters.get('min_rating')
+        if min_rating and float(min_rating) > 0:
+            # For now, we'll filter based on a simulated rating
+            # In a real scenario, you might have actual ratings in your CSV
+            print(f"📊 Rating filter applied (min: {min_rating})")
+        
+        print(f"✅ Final filtered result: {len(filtered_df)} movies")
+        return filtered_df
+    
+    def sort_movies(self, movies_df, sort_by):
+        """Sort movies based on user preference"""
+        if sort_by == 'year':
+            return movies_df.sort_values('year', ascending=False)
+        elif sort_by == 'alphabetical':
+            return movies_df.sort_values('title')
+        elif sort_by == 'popularity':
+            # Sort by movieId as a proxy for popularity (lower IDs = older/more popular)
+            return movies_df.sort_values('movieId')
+        else:  # Default: rating
+            return movies_df  # Will be sorted by predicted rating later
     
     def get_safe_temp_user_id(self):
         """Get a safe temporary user ID that doesn't exist in the dataset"""
         if self._safe_user_id is None:
             try:
-                # Load ratings to find max user ID
                 ratings_path = os.path.join(settings.BASE_DIR, 'ml-20m', 'ratings.csv')
                 max_user_id = pd.read_csv(ratings_path, usecols=['userId'])['userId'].max()
                 self._safe_user_id = max_user_id + 1
                 print(f"🔒 Using safe temporary user ID: {self._safe_user_id}")
             except Exception as e:
                 print(f"⚠️ Could not determine max user ID: {e}")
-                self._safe_user_id = -1  # Fallback to negative ID
+                self._safe_user_id = -1
         
         return self._safe_user_id
     
@@ -174,17 +229,25 @@ class MovieDataLoader:
         
         return self.create_genre_card_placeholder(title, genres)
     
-    def search_movies(self, query, limit=10):
-        """Search for movies by title"""
+    def search_movies(self, query, filters=None, limit=10):
+        """Search for movies by title with optional filters"""
         if not query or len(query) < 2:
             return []
         
+        # Start with all movies
+        search_df = self.movies_df.copy()
+        
+        # Apply filters if provided
+        if filters:
+            search_df = self.apply_filters(search_df, filters)
+        
+        # Apply text search
         query = query.lower()
         matches = []
         
-        for title in self.movie_titles:
-            if query in title.lower():
-                matches.append(title)
+        for _, movie in search_df.iterrows():
+            if query in movie['title'].lower():
+                matches.append(movie['title'])
                 if len(matches) >= limit:
                     break
         
@@ -226,14 +289,22 @@ class MovieDataLoader:
             'selected_details': selected_details
         }
     
-    def find_similar_movies_by_content(self, selected_movies, user_preferences):
-        """Find candidate movies similar to selected movies by content"""
+    def find_similar_movies_by_content(self, selected_movies, user_preferences, filters=None):
+        """Find candidate movies similar to selected movies by content with filters"""
         preferred_genres = user_preferences['preferred_genres']
+        
+        # Start with all movies
+        candidate_df = self.movies_df.copy()
+        
+        # Apply user filters first
+        if filters:
+            candidate_df = self.apply_filters(candidate_df, filters)
+        
         candidate_movies = []
         
-        print(f"🔍 Finding movies similar to user preferences...")
+        print(f"🔍 Finding movies similar to user preferences with filters...")
         
-        for _, movie in self.movies_df.iterrows():
+        for _, movie in candidate_df.iterrows():
             # Skip already selected movies
             if movie['title'] in selected_movies:
                 continue
@@ -248,65 +319,76 @@ class MovieDataLoader:
                     'movieId': movie['movieId'],
                     'title': movie['title'],
                     'genres': list(movie_genres),
-                    'genre_similarity': genre_overlap
+                    'genre_similarity': genre_overlap,
+                    'year': movie.get('year', None)
                 })
         
-        print(f"📽️ Found {len(candidate_movies)} candidate movies with genre overlap")
+        print(f"📽️ Found {len(candidate_movies)} candidate movies with genre overlap after filtering")
         return candidate_movies
     
-    def get_enhanced_recommendations(self, selected_movies, num_recommendations=20):
-        """Generate personalized recommendations using Hybrid Content-Based + SVD approach"""
+    def get_filtered_recommendations(self, selected_movies, filters=None, num_recommendations=20):
+        """Generate personalized recommendations with user filters applied"""
         
         if not self.svd_model:
             print("⚠️ SVD model not available, using fallback recommendations")
-            return self.get_fallback_recommendations(selected_movies, num_recommendations)
+            return self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
         
         try:
-            print(f"🎬 Generating personalized recommendations for: {selected_movies}")
+            print(f"🎬 Generating filtered recommendations for: {selected_movies}")
+            print(f"🔧 Applied filters: {filters}")
             
             # Step 1: Extract user preferences from selected movies
             user_preferences = self.extract_user_preferences(selected_movies)
             
             if not user_preferences['preferred_genres']:
                 print("⚠️ Could not extract user preferences, using fallback")
-                return self.get_fallback_recommendations(selected_movies, num_recommendations)
+                return self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
             
-            # Step 2: Find candidate movies with similar content
-            candidate_movies = self.find_similar_movies_by_content(selected_movies, user_preferences)
+            # Step 2: Find candidate movies with similar content AND apply filters
+            candidate_movies = self.find_similar_movies_by_content(selected_movies, user_preferences, filters)
             
             if not candidate_movies:
-                print("⚠️ No similar movies found, using fallback")
-                return self.get_fallback_recommendations(selected_movies, num_recommendations)
+                print("⚠️ No similar movies found after filtering, using fallback")
+                return self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
             
             # Step 3: Use SVD to predict ratings for candidate movies
             temp_user_id = self.get_safe_temp_user_id()
             svd_predictions = []
             
-            print(f"🤖 Using SVD model to predict ratings for {len(candidate_movies)} candidates...")
+            print(f"🤖 Using SVD model to predict ratings for {len(candidate_movies)} filtered candidates...")
             
             for movie in candidate_movies:
                 try:
                     pred = self.svd_model.predict(temp_user_id, movie['movieId'])
                     
                     # Boost rating based on genre similarity
-                    genre_boost = movie['genre_similarity'] * 0.3  # 0.3 points per matching genre
-                    adjusted_rating = min(pred.est + genre_boost, 5.0)  # Cap at 5.0
+                    genre_boost = movie['genre_similarity'] * 0.3
+                    adjusted_rating = min(pred.est + genre_boost, 5.0)
                     
                     svd_predictions.append({
                         'movieId': movie['movieId'],
                         'title': movie['title'],
                         'predicted_rating': round(adjusted_rating, 1),
                         'genres': movie['genres'],
-                        'genre_similarity': movie['genre_similarity']
+                        'genre_similarity': movie['genre_similarity'],
+                        'year': movie.get('year')
                     })
                 except Exception as pred_error:
                     continue
             
-            # Step 4: Sort by predicted rating and return top recommendations
-            svd_predictions.sort(key=lambda x: x['predicted_rating'], reverse=True)
+            # Step 4: Apply sorting based on user preference
+            sort_by = filters.get('sort_by', 'rating') if filters else 'rating'
+            
+            if sort_by == 'year' and any(p.get('year') for p in svd_predictions):
+                svd_predictions.sort(key=lambda x: x.get('year', 0), reverse=True)
+            elif sort_by == 'alphabetical':
+                svd_predictions.sort(key=lambda x: x['title'])
+            else:  # Default: rating
+                svd_predictions.sort(key=lambda x: x['predicted_rating'], reverse=True)
+            
             top_predictions = svd_predictions[:num_recommendations]
             
-            print(f"✨ Generated {len(top_predictions)} personalized recommendations")
+            print(f"✨ Generated {len(top_predictions)} filtered and sorted recommendations")
             
             # Fetch posters for recommendations
             print("🎨 Fetching movie posters...")
@@ -315,29 +397,65 @@ class MovieDataLoader:
                 movie_data['poster_url'] = self.search_tmdb_movie(movie_data['title'], movie_data['genres'])
                 time.sleep(0.1)
             
-            print("🎯 Personalized recommendations ready!")
+            print("🎯 Filtered recommendations ready!")
             return top_predictions
             
         except Exception as e:
-            print(f"❌ Error generating personalized recommendations: {e}")
-            return self.get_fallback_recommendations(selected_movies, num_recommendations)
+            print(f"❌ Error generating filtered recommendations: {e}")
+            return self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
     
-    def get_fallback_recommendations(self, selected_movies, num_recommendations):
+    def get_enhanced_recommendations(self, selected_movies, num_recommendations=20):
+        """Generate enhanced recommendations (backward compatibility)"""
+        return self.get_filtered_recommendations(selected_movies, None, num_recommendations)
+    
+    def get_fallback_recommendations(self, selected_movies, filters=None, num_recommendations=20):
         """Fallback recommendations when personalization fails"""
         print("🔄 Using fallback recommendation system")
         
         sample_recommendations = [
-            {'title': 'The Shawshank Redemption (1994)', 'predicted_rating': 4.8, 'genres': ['Drama']},
-            {'title': 'The Godfather (1972)', 'predicted_rating': 4.7, 'genres': ['Crime', 'Drama']},
-            {'title': 'The Dark Knight (2008)', 'predicted_rating': 4.6, 'genres': ['Action', 'Crime', 'Drama']},
-            {'title': 'Pulp Fiction (1994)', 'predicted_rating': 4.5, 'genres': ['Crime', 'Drama']},
-            {'title': 'Forrest Gump (1994)', 'predicted_rating': 4.4, 'genres': ['Comedy', 'Drama', 'Romance']},
-            {'title': 'Inception (2010)', 'predicted_rating': 4.3, 'genres': ['Action', 'Sci-Fi', 'Thriller']},
-            {'title': 'The Matrix (1999)', 'predicted_rating': 4.2, 'genres': ['Action', 'Sci-Fi']},
-            {'title': 'Goodfellas (1990)', 'predicted_rating': 4.1, 'genres': ['Biography', 'Crime', 'Drama']},
-            {'title': 'The Lord of the Rings: The Return of the King (2003)', 'predicted_rating': 4.0, 'genres': ['Adventure', 'Drama', 'Fantasy']},
-            {'title': 'Star Wars: Episode IV - A New Hope (1977)', 'predicted_rating': 3.9, 'genres': ['Action', 'Adventure', 'Fantasy']}
+            {'title': 'The Shawshank Redemption (1994)', 'predicted_rating': 4.8, 'genres': ['Drama'], 'year': 1994},
+            {'title': 'The Godfather (1972)', 'predicted_rating': 4.7, 'genres': ['Crime', 'Drama'], 'year': 1972},
+            {'title': 'The Dark Knight (2008)', 'predicted_rating': 4.6, 'genres': ['Action', 'Crime', 'Drama'], 'year': 2008},
+            {'title': 'Pulp Fiction (1994)', 'predicted_rating': 4.5, 'genres': ['Crime', 'Drama'], 'year': 1994},
+            {'title': 'Forrest Gump (1994)', 'predicted_rating': 4.4, 'genres': ['Comedy', 'Drama', 'Romance'], 'year': 1994},
+            {'title': 'Inception (2010)', 'predicted_rating': 4.3, 'genres': ['Action', 'Sci-Fi', 'Thriller'], 'year': 2010},
+            {'title': 'The Matrix (1999)', 'predicted_rating': 4.2, 'genres': ['Action', 'Sci-Fi'], 'year': 1999},
+            {'title': 'Goodfellas (1990)', 'predicted_rating': 4.1, 'genres': ['Biography', 'Crime', 'Drama'], 'year': 1990},
+            {'title': 'The Lord of the Rings: The Return of the King (2003)', 'predicted_rating': 4.0, 'genres': ['Adventure', 'Drama', 'Fantasy'], 'year': 2003},
+            {'title': 'Star Wars: Episode IV - A New Hope (1977)', 'predicted_rating': 3.9, 'genres': ['Action', 'Adventure', 'Fantasy'], 'year': 1977}
         ]
+        
+        # Apply filters to fallback recommendations if provided
+        if filters:
+            filtered_samples = []
+            for rec in sample_recommendations:
+                # Check genre filter
+                if filters.get('genres'):
+                    genre_match = any(genre in rec['genres'] for genre in filters['genres'])
+                    if not genre_match:
+                        continue
+                
+                # Check year filter
+                if filters.get('year_min') and rec['year'] < int(filters['year_min']):
+                    continue
+                if filters.get('year_max') and rec['year'] > int(filters['year_max']):
+                    continue
+                
+                # Check rating filter
+                if filters.get('min_rating') and rec['predicted_rating'] < float(filters['min_rating']):
+                    continue
+                
+                filtered_samples.append(rec)
+            
+            sample_recommendations = filtered_samples
+        
+        # Apply sorting
+        sort_by = filters.get('sort_by', 'rating') if filters else 'rating'
+        if sort_by == 'year':
+            sample_recommendations.sort(key=lambda x: x['year'], reverse=True)
+        elif sort_by == 'alphabetical':
+            sample_recommendations.sort(key=lambda x: x['title'])
+        # rating is already sorted
         
         for i, rec in enumerate(sample_recommendations[:num_recommendations]):
             rec['poster_url'] = self.search_tmdb_movie(rec['title'], rec['genres'])

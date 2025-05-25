@@ -13,35 +13,35 @@
             <label class="filter-label">Genres</label>
             <div class="genre-checkboxes" id="genre-checkboxes">
                 <div class="genre-checkbox">
-                    <input type="checkbox" id="action" value="Action">
+                    <input type="checkbox" id="action" name="genres" value="Action">
                     <label for="action">Action</label>
                 </div>
                 <div class="genre-checkbox">
-                    <input type="checkbox" id="comedy" value="Comedy">
+                    <input type="checkbox" id="comedy" name="genres" value="Comedy">
                     <label for="comedy">Comedy</label>
                 </div>
                 <div class="genre-checkbox">
-                    <input type="checkbox" id="drama" value="Drama">
+                    <input type="checkbox" id="drama" name="genres" value="Drama">
                     <label for="drama">Drama</label>
                 </div>
                 <div class="genre-checkbox">
-                    <input type="checkbox" id="horror" value="Horror">
+                    <input type="checkbox" id="horror" name="genres" value="Horror">
                     <label for="horror">Horror</label>
                 </div>
                 <div class="genre-checkbox">
-                    <input type="checkbox" id="romance" value="Romance">
+                    <input type="checkbox" id="romance" name="genres" value="Romance">
                     <label for="romance">Romance</label>
                 </div>
                 <div class="genre-checkbox">
-                    <input type="checkbox" id="sci-fi" value="Sci-Fi">
+                    <input type="checkbox" id="sci-fi" name="genres" value="Sci-Fi">
                     <label for="sci-fi">Sci-Fi</label>
                 </div>
                 <div class="genre-checkbox">
-                    <input type="checkbox" id="thriller" value="Thriller">
+                    <input type="checkbox" id="thriller" name="genres" value="Thriller">
                     <label for="thriller">Thriller</label>
                 </div>
                 <div class="genre-checkbox">
-                    <input type="checkbox" id="fantasy" value="Fantasy">
+                    <input type="checkbox" id="fantasy" name="genres" value="Fantasy">
                     <label for="fantasy">Fantasy</label>
                 </div>
             </div>
@@ -51,8 +51,8 @@
         <div class="filter-group">
             <label class="filter-label">Release Year</label>
             <div class="range-slider">
-                <input type="range" class="range-input" id="year-min" min="1900" max="2024" value="1990">
-                <input type="range" class="range-input" id="year-max" min="1900" max="2024" value="2024">
+                <input type="range" class="range-input" id="year-min" name="year_min" min="1900" max="2024" value="1990">
+                <input type="range" class="range-input" id="year-max" name="year_max" min="1900" max="2024" value="2024">
                 <div class="range-values">
                     <span id="year-min-value">1990</span>
                     <span id="year-max-value">2024</span>
@@ -63,7 +63,7 @@
         <!-- Rating Filter -->
         <div class="filter-group">
             <label class="filter-label">Minimum Rating</label>
-            <select class="filter-input" id="rating-filter">
+            <select class="filter-input" id="rating-filter" name="min_rating">
                 <option value="0">Any Rating</option>
                 <option value="3">3+ Stars</option>
                 <option value="4">4+ Stars</option>
@@ -74,7 +74,7 @@
         <!-- Sort Options -->
         <div class="filter-group">
             <label class="filter-label">Sort By</label>
-            <select class="filter-input" id="sort-filter">
+            <select class="filter-input" id="sort-filter" name="sort_by">
                 <option value="rating">Highest Rated</option>
                 <option value="year">Newest First</option>
                 <option value="popularity">Most Popular</option>
@@ -122,6 +122,9 @@
             <!-- Hidden inputs for selected movies -->
             <div id="hidden-inputs"></div>
             
+            <!-- Hidden inputs for filters -->
+            <div id="filter-inputs"></div>
+            
             <button type="submit" class="btn-recommend" id="recommend-btn" disabled>
                 ✨ Get My Recommendations
             </button>
@@ -132,14 +135,21 @@
         </form>
     </div>
 
-    <!-- Right Panel: Compact Live Preview -->
+    <!-- Right Panel: Live Preview -->
     <div class="preview-panel">
-        <h3 class="panel-header">🔮 Preview</h3>
+        <h3 class="panel-header">🔮 Live Preview</h3>
         
         <div id="user-profile" style="margin-bottom: 20px;">
             <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 14px;">Your Taste</h4>
             <div id="preferred-genres" style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
                 Select movies to see preferences
+            </div>
+        </div>
+
+        <div id="active-filters" style="margin-bottom: 20px;">
+            <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 14px;">Active Filters</h4>
+            <div id="filter-summary" style="font-size: 11px; color: var(--text-muted);">
+                No filters applied
             </div>
         </div>
 
@@ -162,13 +172,14 @@
 </div>
 
 <script>
-    // Same JavaScript as before but with improved spacing
     const searchBox = document.getElementById('movie-search');
     const searchResults = document.getElementById('search-results');
     const selectedMoviesDiv = document.getElementById('selected-movies');
     const hiddenInputsDiv = document.getElementById('hidden-inputs');
+    const filterInputsDiv = document.getElementById('filter-inputs');
     const recommendBtn = document.getElementById('recommend-btn');
     const preferredGenresDiv = document.getElementById('preferred-genres');
+    const filterSummaryDiv = document.getElementById('filter-summary');
     let selectedMovies = [];
     let searchTimeout;
 
@@ -184,7 +195,23 @@
         }
         
         searchTimeout = setTimeout(() => {
-            fetch(`/search/?q=${encodeURIComponent(query)}`)
+            // Get current filter values
+            const currentFilters = getCurrentFilters();
+            
+            // Build query string with filters
+            const params = new URLSearchParams();
+            params.append('q', query);
+            
+            // Add filter parameters
+            Object.entries(currentFilters).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    value.forEach(v => params.append(key, v));
+                } else if (value) {
+                    params.append(key, value);
+                }
+            });
+            
+            fetch(`/search/?${params.toString()}`)
                 .then(response => response.json())
                 .then(data => {
                     displaySearchResults(data.movies);
@@ -194,6 +221,78 @@
                 });
         }, 300);
     });
+
+    function getCurrentFilters() {
+        const filters = {};
+        
+        // Get selected genres
+        const selectedGenres = [];
+        document.querySelectorAll('input[name="genres"]:checked').forEach(cb => {
+            selectedGenres.push(cb.value);
+        });
+        if (selectedGenres.length > 0) {
+            filters.genres = selectedGenres;
+        }
+        
+        // Get year range
+        const yearMin = document.getElementById('year-min').value;
+        const yearMax = document.getElementById('year-max').value;
+        if (yearMin !== '1900') filters.year_min = yearMin;
+        if (yearMax !== '2024') filters.year_max = yearMax;
+        
+        // Get rating filter
+        const minRating = document.getElementById('rating-filter').value;
+        if (minRating !== '0') filters.min_rating = minRating;
+        
+        // Get sort option
+        const sortBy = document.getElementById('sort-filter').value;
+        if (sortBy !== 'rating') filters.sort_by = sortBy;
+        
+        return filters;
+    }
+
+    function updateFilterSummary() {
+        const filters = getCurrentFilters();
+        let summary = [];
+        
+        if (filters.genres && filters.genres.length > 0) {
+            summary.push(`Genres: ${filters.genres.join(', ')}`);
+        }
+        
+        if (filters.year_min || filters.year_max) {
+            const yearRange = `${filters.year_min || '1900'}-${filters.year_max || '2024'}`;
+            summary.push(`Years: ${yearRange}`);
+        }
+        
+        if (filters.min_rating) {
+            summary.push(`Rating: ${filters.min_rating}+ stars`);
+        }
+        
+        if (filters.sort_by && filters.sort_by !== 'rating') {
+            summary.push(`Sort: ${filters.sort_by}`);
+        }
+        
+        filterSummaryDiv.innerHTML = summary.length > 0 ? 
+            summary.map(s => `<span style="background: var(--accent-primary); color: white; padding: 1px 6px; border-radius: 8px; margin: 1px; display: inline-block; font-size: 9px;">${s}</span>`).join('') :
+            'No filters applied';
+    }
+
+    function updateFilterInputs() {
+        const filters = getCurrentFilters();
+        let inputs = '';
+        
+        Object.entries(filters).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                value.forEach(v => {
+                    inputs += `<input type="hidden" name="${key}" value="${v}">`;
+                });
+            } else {
+                inputs += `<input type="hidden" name="${key}" value="${value}">`;
+            }
+        });
+        
+        filterInputsDiv.innerHTML = inputs;
+    }
 
     function displaySearchResults(movies) {
         if (movies.length === 0) {
@@ -278,7 +377,7 @@
         }
     }
 
-    // Filter functionality (same as before)
+    // Filter event listeners
     const yearMinSlider = document.getElementById('year-min');
     const yearMaxSlider = document.getElementById('year-max');
     const yearMinValue = document.getElementById('year-min-value');
@@ -290,6 +389,8 @@
             yearMaxSlider.value = this.value;
             yearMaxValue.textContent = this.value;
         }
+        updateFilterSummary();
+        updateFilterInputs();
     });
 
     yearMaxSlider.addEventListener('input', function() {
@@ -298,9 +399,32 @@
             yearMinSlider.value = this.value;
             yearMinValue.textContent = this.value;
         }
+        updateFilterSummary();
+        updateFilterInputs();
     });
 
+    // Genre checkbox listeners
+    document.querySelectorAll('input[name="genres"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateFilterSummary();
+            updateFilterInputs();
+        });
+    });
+
+    // Rating and sort listeners
+    document.getElementById('rating-filter').addEventListener('change', function() {
+        updateFilterSummary();
+        updateFilterInputs();
+    });
+
+    document.getElementById('sort-filter').addEventListener('change', function() {
+        updateFilterSummary();
+        updateFilterInputs();
+    });
+
+    // Clear filters functionality
     document.getElementById('clear-filters').addEventListener('click', function() {
+        // Reset all filters
         document.querySelectorAll('.genre-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
         yearMinSlider.value = 1990;
         yearMaxSlider.value = 2024;
@@ -308,12 +432,25 @@
         yearMaxValue.textContent = '2024';
         document.getElementById('rating-filter').value = '0';
         document.getElementById('sort-filter').value = 'rating';
+        
+        updateFilterSummary();
+        updateFilterInputs();
     });
 
+    // Form submission handler
+    document.getElementById('recommendation-form').addEventListener('submit', function(e) {
+        updateFilterInputs(); // Ensure filter inputs are up to date
+    });
+
+    // Hide search results when clicking outside
     document.addEventListener('click', function(e) {
         if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
             searchResults.style.display = 'none';
         }
     });
+
+    // Initialize
+    updateFilterSummary();
+    updateFilterInputs();
 </script>
 {% endblock %}
