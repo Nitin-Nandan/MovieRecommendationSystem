@@ -179,18 +179,18 @@ class MovieDataLoader:
         
         selected_card = 'default'
         
-        print(f"🎨 Checking genres for '{title}': {genres}")  # Debug log
+        print(f"🎨 DEBUG: Processing '{title}' with genres: {genres}")
         
         if genres and len(genres) > 0:
             # Check each genre against our mapping
             for genre in genres:
                 genre_lower = genre.lower().strip()
-                print(f"🔍 Checking genre: '{genre_lower}'")  # Debug log
+                print(f"🔍 DEBUG: Checking genre: '{genre_lower}'")
                 
                 for card_type, genre_list in genre_mapping.items():
                     if any(g.lower() in genre_lower or genre_lower in g.lower() for g in genre_list):
                         selected_card = card_type
-                        print(f"✅ Matched '{genre_lower}' to '{card_type}' card")  # Debug log
+                        print(f"✅ DEBUG: Matched '{genre_lower}' to '{card_type}' card")
                         break
                 if selected_card != 'default':
                     break
@@ -198,7 +198,7 @@ class MovieDataLoader:
             # If no match found, use the first genre as fallback
             if selected_card == 'default' and genres:
                 first_genre = genres[0].lower().strip()
-                print(f"🔄 No match found, using fallback for first genre: '{first_genre}'")
+                print(f"🔄 DEBUG: No match found, using fallback for first genre: '{first_genre}'")
                 
                 # Additional fallback mappings
                 fallback_mapping = {
@@ -207,14 +207,20 @@ class MovieDataLoader:
                     'history': 'drama',
                     'mystery': 'crime',
                     'adventure': 'action',
-                    'thriller': 'action'
+                    'thriller': 'action',
+                    'animation': 'animation'
                 }
                 
                 selected_card = fallback_mapping.get(first_genre, 'default')
-                print(f"🎯 Fallback result: '{selected_card}' card")
+                print(f"🎯 DEBUG: Fallback result: '{selected_card}' card")
         
-        print(f"🎨 Final card selection for '{title}': {selected_card}")
-        return f"/static/movapp/images/genre-cards/{selected_card}.svg"
+        print(f"🎨 DEBUG: Final selection for '{title}': {selected_card}")
+        
+        # Check if the file actually exists
+        card_path = f"/static/movapp/images/genre-cards/{selected_card}.svg"
+        print(f"📁 DEBUG: Returning path: {card_path}")
+        
+        return card_path
     
     def search_tmdb_movie(self, title, genres=None):
         """Search for movie on TMDB with robust error handling and genre card fallback"""
