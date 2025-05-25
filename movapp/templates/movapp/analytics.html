@@ -1,0 +1,542 @@
+{% extends 'movapp/base.html' %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Left Panel: Analytics Controls -->
+    <div class="filters-panel">
+        <h3 class="panel-header">📊 Analytics Controls</h3>
+        
+        <!-- Movie Selection Section -->
+        <div class="filter-group" style="position: relative;">
+            <label class="filter-label">Select Movies for Analysis</label>
+            <input type="text" id="movie-search-analytics" class="filter-input" placeholder="Search movies..." style="margin-bottom: 10px;">
+            <div id="selected-movies-analytics" style="min-height: 100px; padding: 10px; background: var(--card-bg); border-radius: 8px; border: 2px dashed var(--border-color);">
+                <p style="color: var(--text-muted); font-size: 12px;">Search and select movies to analyze your preferences</p>
+            </div>
+        </div>
+
+        <!-- Analyze Button -->
+        <button id="analyze-btn" class="btn-recommend" style="margin-top: 20px;">
+            📈 Analyze Preferences
+        </button>
+
+        <!-- Analytics Features Info -->
+        <div style="margin-top: 20px; padding: 15px; background: var(--card-bg); border-radius: 10px;">
+            <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 14px;">Analytics Features</h4>
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
+                • Genre preference analysis<br>
+                • Recommendation confidence scores<br>
+                • Rating distribution patterns<br>
+                • Movie era preferences<br>
+                • Real-time chart updates<br>
+                • Interactive visualizations
+            </div>
+        </div>
+    </div>
+
+    <!-- Center Panel: Charts and Analytics -->
+    <div class="main-content">
+        <!-- Header Section -->
+        <div class="main-header">
+            <h1 class="main-title">📊 Analytics Dashboard</h1>
+            <p class="main-subtitle">Discover insights about your movie preferences</p>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="javascript:history.back()" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; text-decoration: none; padding: 10px 20px; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 5px 15px var(--glow-color); display: inline-block; margin-right: 10px;">
+                ← Back to Recommendations
+            </a>
+            <a href="{% url 'home' %}" style="background: linear-gradient(45deg, #28a745, #20c997); color: white; text-decoration: none; padding: 10px 20px; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3); display: inline-block;">
+                🏠 Home
+            </a>
+        </div>
+
+        <!-- Chart 1: Genre Preferences (Pie Chart) -->
+        <div style="background: var(--card-bg); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid var(--border-color);">
+            <h3 style="color: var(--text-primary); margin-bottom: 20px; text-align: center;">Your Genre Preferences</h3>
+            <div style="position: relative; height: 400px;">
+                <canvas id="genreChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: Recommendation Confidence (Bar Chart) -->
+        <div style="background: var(--card-bg); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid var(--border-color);">
+            <h3 style="color: var(--text-primary); margin-bottom: 20px; text-align: center;">Recommendation Confidence</h3>
+            <div style="position: relative; height: 300px;">
+                <canvas id="insightsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 3: Rating Distribution (Line Chart) - Phase 3 -->
+        <div style="background: var(--card-bg); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid var(--border-color);">
+            <h3 style="color: var(--text-primary); margin-bottom: 20px; text-align: center;">Rating Distribution Analysis</h3>
+            <div style="position: relative; height: 350px;">
+                <canvas id="ratingChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 4: Movie Era Preferences (Polar Area Chart) - Phase 3 -->
+        <div style="background: var(--card-bg); padding: 25px; border-radius: 15px; border: 1px solid var(--border-color);">
+            <h3 style="color: var(--text-primary); margin-bottom: 20px; text-align: center;">Movie Era Preferences</h3>
+            <div style="position: relative; height: 300px;">
+                <canvas id="eraChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Insights and Legend -->
+    <div class="preview-panel">
+        <h3 class="panel-header">🔮 Insights</h3>
+        
+        <!-- Analysis Summary -->
+        <div id="analytics-summary" style="margin-bottom: 20px;">
+            <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 14px;">Analysis Summary</h4>
+            <div id="summary-content" style="background: var(--card-bg); padding: 15px; border-radius: 10px; font-size: 12px; color: var(--text-muted);">
+                Select movies to see your preference analysis
+            </div>
+        </div>
+
+        <!-- Chart Legends -->
+        <div>
+            <h4 style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">Chart Explanations</h4>
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
+                <strong>Genre Chart:</strong> Shows your preferred movie genres<br><br>
+                
+                <strong>Confidence Chart:</strong><br>
+                • High: Strong recommendations (4+ stars)<br>
+                • Medium: Good matches (3-4 stars)<br>
+                • Exploratory: New discoveries (&lt;3 stars)<br><br>
+                
+                <strong>Rating Distribution:</strong><br>
+                Shows quality patterns in recommendations<br><br>
+                
+                <strong>Era Preferences:</strong><br>
+                Your taste across different decades
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables for chart instances
+let genreChart, insightsChart, ratingChart, eraChart;
+let selectedMoviesAnalytics = [];
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all charts
+    initializeCharts();
+    
+    // Setup movie search functionality
+    setupAnalyticsSearch();
+    
+    // Setup analyze button click handler
+    document.getElementById('analyze-btn').addEventListener('click', updateCharts);
+    
+    // Watch for theme changes to update chart colors
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                updateChartsForTheme();
+            }
+        });
+    });
+    
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+    });
+});
+
+/**
+ * Initialize all Chart.js charts with proper theme support
+ * Creates: Genre pie chart, confidence bar chart, rating line chart, era polar chart
+ */
+function initializeCharts() {
+    // Get current theme colors for dynamic styling
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDarkMode ? '#EEE' : '#333';
+    const gridColor = isDarkMode ? '#444' : '#E0E0E0';
+    
+    // Chart 1: Genre Preferences Pie Chart
+    const genreCtx = document.getElementById('genreChart').getContext('2d');
+    genreChart = new Chart(genreCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Select movies', 'to see your', 'preferences'],
+            datasets: [{
+                data: [1, 1, 1],
+                backgroundColor: ['#667eea', '#764ba2', '#f093fb'],
+                borderWidth: 2,
+                borderColor: isDarkMode ? '#333' : '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: textColor,
+                        padding: 20,
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+
+    // Chart 2: Recommendation Confidence Bar Chart
+    const insightsCtx = document.getElementById('insightsChart').getContext('2d');
+    insightsChart = new Chart(insightsCtx, {
+        type: 'bar',
+        data: {
+            labels: ['High Confidence', 'Medium Confidence', 'Exploratory'],
+            datasets: [{
+                label: 'Recommendations',
+                data: [0, 0, 0],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Chart 3: Rating Distribution Line Chart (Phase 3)
+    const ratingCtx = document.getElementById('ratingChart').getContext('2d');
+    ratingChart = new Chart(ratingCtx, {
+        type: 'line',
+        data: {
+            labels: ['1-2 Stars', '2-3 Stars', '3-4 Stars', '4-5 Stars'],
+            datasets: [{
+                label: 'Number of Movies',
+                data: [0, 0, 0, 0],
+                backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                borderColor: '#667eea',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: textColor }
+                }
+            }
+        }
+    });
+
+    // Chart 4: Movie Era Polar Area Chart (Phase 3)
+    const eraCtx = document.getElementById('eraChart').getContext('2d');
+    eraChart = new Chart(eraCtx, {
+        type: 'polarArea',
+        data: {
+            labels: ['1970s', '1980s', '1990s', '2000s', '2010s', '2020s'],
+            datasets: [{
+                data: [0, 0, 0, 0, 0, 0],
+                backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#53a0fd', '#4ecdc4', '#45b7d1']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: textColor }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Update chart colors when theme changes (Light Side ↔ Dark Side)
+ */
+function updateChartsForTheme() {
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDarkMode ? '#EEE' : '#333';
+    const gridColor = isDarkMode ? '#444' : '#E0E0E0';
+    
+    // Update genre chart
+    if (genreChart) {
+        genreChart.options.plugins.legend.labels.color = textColor;
+        genreChart.data.datasets[0].borderColor = isDarkMode ? '#333' : '#fff';
+        genreChart.update();
+    }
+    
+    // Update insights chart
+    if (insightsChart) {
+        insightsChart.options.scales.y.ticks.color = textColor;
+        insightsChart.options.scales.x.ticks.color = textColor;
+        insightsChart.options.scales.y.grid.color = gridColor;
+        insightsChart.options.scales.x.grid.color = gridColor;
+        insightsChart.update();
+    }
+    
+    // Update rating chart (Phase 3)
+    if (ratingChart) {
+        ratingChart.options.scales.y.ticks.color = textColor;
+        ratingChart.options.scales.x.ticks.color = textColor;
+        ratingChart.options.scales.y.grid.color = gridColor;
+        ratingChart.options.scales.x.grid.color = gridColor;
+        ratingChart.options.plugins.legend.labels.color = textColor;
+        ratingChart.update();
+    }
+    
+    // Update era chart (Phase 3)
+    if (eraChart) {
+        eraChart.options.plugins.legend.labels.color = textColor;
+        eraChart.update();
+    }
+}
+
+/**
+ * Setup movie search functionality for analytics
+ * Connects to existing movie search API
+ */
+function setupAnalyticsSearch() {
+    const searchBox = document.getElementById('movie-search-analytics');
+    let searchTimeout;
+    
+    // Real-time search with debouncing
+    searchBox.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            hideSearchResults();
+            return;
+        }
+        
+        // Debounce search requests
+        searchTimeout = setTimeout(() => {
+            fetch(`/search/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    showSearchResults(data.movies, query);
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                });
+        }, 300);
+    });
+    
+    // Hide search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchBox.contains(e.target)) {
+            hideSearchResults();
+        }
+    });
+}
+
+/**
+ * Display search results dropdown
+ */
+function showSearchResults(movies, query) {
+    // Remove existing search results
+    const existingResults = document.getElementById('analytics-search-results');
+    if (existingResults) {
+        existingResults.remove();
+    }
+    
+    if (movies.length === 0) {
+        return;
+    }
+    
+    // Create search results dropdown
+    const resultsDiv = document.createElement('div');
+    resultsDiv.id = 'analytics-search-results';
+    resultsDiv.style.cssText = `
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 5px 15px var(--shadow-color);
+    `;
+    
+    resultsDiv.innerHTML = movies.map(movie => 
+        `<div onclick="addMovieToAnalytics('${movie.replace(/'/g, "\\'")}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border-color); color: var(--text-primary); transition: background 0.2s ease;" onmouseover="this.style.background='var(--card-bg)'" onmouseout="this.style.background='transparent'">${movie}</div>`
+    ).join('');
+    
+    // Position relative to search box
+    const searchContainer = document.querySelector('.filter-group');
+    searchContainer.appendChild(resultsDiv);
+}
+
+/**
+ * Hide search results dropdown
+ */
+function hideSearchResults() {
+    const existingResults = document.getElementById('analytics-search-results');
+    if (existingResults) {
+        existingResults.remove();
+    }
+}
+
+/**
+ * Add movie to analytics selection
+ */
+function addMovieToAnalytics(movieTitle) {
+    if (!selectedMoviesAnalytics.includes(movieTitle)) {
+        selectedMoviesAnalytics.push(movieTitle);
+        updateSelectedMoviesDisplay();
+        hideSearchResults();
+        document.getElementById('movie-search-analytics').value = '';
+    }
+}
+
+/**
+ * Remove movie from analytics selection
+ */
+function removeMovieFromAnalytics(movieTitle) {
+    selectedMoviesAnalytics = selectedMoviesAnalytics.filter(m => m !== movieTitle);
+    updateSelectedMoviesDisplay();
+}
+
+/**
+ * Update the display of selected movies
+ */
+function updateSelectedMoviesDisplay() {
+    const selectedDiv = document.getElementById('selected-movies-analytics');
+    
+    if (selectedMoviesAnalytics.length === 0) {
+        selectedDiv.innerHTML = '<p style="color: var(--text-muted); font-size: 12px;">Search and select movies to analyze your preferences</p>';
+    } else {
+        selectedDiv.innerHTML = selectedMoviesAnalytics.map(movie => 
+            `<span class="movie-tag" style="display: inline-block; background: var(--accent-primary); color: white; padding: 4px 8px; margin: 2px; border-radius: 12px; font-size: 11px;">
+                ${movie}
+                <span onclick="removeMovieFromAnalytics('${movie.replace(/'/g, "\\'")}')" style="margin-left: 5px; cursor: pointer;">&times;</span>
+            </span>`
+        ).join('');
+    }
+}
+
+/**
+ * Update all charts with new data
+ * Fetches data from all API endpoints and updates charts
+ */
+function updateCharts() {
+    if (selectedMoviesAnalytics.length === 0) {
+        alert('Please select at least one movie for analysis');
+        return;
+    }
+    
+    console.log('Updating charts for movies:', selectedMoviesAnalytics);
+    
+    // Prepare URL parameters for API calls
+    const genreParams = new URLSearchParams();
+    selectedMoviesAnalytics.forEach(movie => genreParams.append('movies', movie));
+    
+    // Update Chart 1: Genre preferences
+    fetch(`/api/user-preferences/?${genreParams.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Genre data received:', data);
+            genreChart.data.labels = data.labels;
+            genreChart.data.datasets[0].data = data.data;
+            genreChart.data.datasets[0].backgroundColor = data.backgroundColor;
+            genreChart.update();
+            
+            updateSummary(data);
+        })
+        .catch(error => {
+            console.error('Error fetching genre data:', error);
+        });
+    
+    // Update Chart 2: Recommendation insights
+    fetch(`/api/recommendation-insights/?${genreParams.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Insights data received:', data);
+            insightsChart.data.datasets[0].data = data.data;
+            insightsChart.update();
+        })
+        .catch(error => {
+            console.error('Error fetching insights data:', error);
+        });
+    
+    // Update Chart 3: Rating distribution (Phase 3)
+    fetch(`/api/rating-distribution/?${genreParams.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Rating distribution data received:', data);
+            ratingChart.data.datasets[0].data = data.data;
+            ratingChart.update();
+        })
+        .catch(error => {
+            console.error('Error fetching rating distribution data:', error);
+        });
+    
+    // Update Chart 4: Movie era preferences (Phase 3)
+    fetch(`/api/movie-era/?${genreParams.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Era data received:', data);
+            eraChart.data.datasets[0].data = data.data;
+            eraChart.update();
+        })
+        .catch(error => {
+            console.error('Error fetching era data:', error);
+        });
+}
+
+/**
+ * Update the analysis summary in the right panel
+ */
+function updateSummary(genreData) {
+    const summaryDiv = document.getElementById('summary-content');
+    const totalMovies = selectedMoviesAnalytics.length;
+    const topGenre = genreData.labels[0] || 'Unknown';
+    
+    summaryDiv.innerHTML = `
+        <strong>Movies Analyzed:</strong> ${totalMovies}<br>
+        <strong>Top Genre:</strong> ${topGenre}<br>
+        <strong>Genre Diversity:</strong> ${genreData.labels.length} different genres<br>
+        <strong>Analysis:</strong> Your taste spans ${genreData.labels.length > 3 ? 'diverse' : 'focused'} preferences
+    `;
+}
+</script>
+{% endblock %}

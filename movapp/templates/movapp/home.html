@@ -7,7 +7,7 @@
     <!-- Left Panel: Filters and Controls -->
     <div class="filters-panel">
         <h3 class="panel-header">🎛️ Search Filters</h3>
-        
+
         <!-- Genre Filter -->
         <div class="filter-group">
             <label class="filter-label">Genres</label>
@@ -51,8 +51,10 @@
         <div class="filter-group">
             <label class="filter-label">Release Year</label>
             <div class="range-slider">
-                <input type="range" class="range-input" id="year-min" name="year_min" min="1900" max="2024" value="1990">
-                <input type="range" class="range-input" id="year-max" name="year_max" min="1900" max="2024" value="2024">
+                <input type="range" class="range-input" id="year-min" name="year_min" min="1900" max="2024"
+                    value="1990">
+                <input type="range" class="range-input" id="year-max" name="year_max" min="1900" max="2024"
+                    value="2024">
                 <div class="range-values">
                     <span id="year-min-value">1990</span>
                     <span id="year-max-value">2024</span>
@@ -83,7 +85,8 @@
         </div>
 
         <!-- Clear Filters Button -->
-        <button type="button" class="btn-recommend" id="clear-filters" style="background: var(--text-muted); margin-top: 20px; font-size: 14px; padding: 10px 20px;">
+        <button type="button" class="btn-recommend" id="clear-filters"
+            style="background: var(--text-muted); margin-top: 20px; font-size: 14px; padding: 10px 20px;">
             🔄 Clear Filters
         </button>
     </div>
@@ -96,39 +99,42 @@
         </div>
 
         {% if error %}
-            <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                {{ error }}
-            </div>
+        <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            {{ error }}
+        </div>
         {% endif %}
-        
+
         <form method="post" id="recommendation-form">
             {% csrf_token %}
-            
+
             <div class="search-container">
-                <input 
-                    type="text" 
-                    class="search-box" 
-                    id="movie-search" 
-                    placeholder="🔍 Search for movies you love..." 
-                    autocomplete="off"
-                >
+                <input type="text" class="search-box" id="movie-search" placeholder="🔍 Search for movies you love..."
+                    autocomplete="off">
                 <div id="search-results" style="display: none;"></div>
             </div>
-            
+
             <div class="selected-movies" id="selected-movies">
                 <p style="color: var(--text-muted);">Selected movies will appear here...</p>
             </div>
-            
+
             <!-- Hidden inputs for selected movies -->
             <div id="hidden-inputs"></div>
-            
+
             <!-- Hidden inputs for filters -->
             <div id="filter-inputs"></div>
-            
+
             <button type="submit" class="btn-recommend" id="recommend-btn" disabled>
                 ✨ Get My Recommendations
             </button>
-            
+
+            <!-- Add this after your existing recommendation button -->
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="{% url 'analytics' %}"
+                    style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; text-decoration: none; padding: 12px 24px; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 10px 20px var(--glow-color); display: inline-block;">
+                    📊 Analytics Dashboard
+                </a>
+            </div>
+
             <p class="instructions">
                 💡 Select at least 3 movies to get personalized recommendations
             </p>
@@ -138,7 +144,7 @@
     <!-- Right Panel: Live Preview -->
     <div class="preview-panel">
         <h3 class="panel-header">🔮 Live Preview</h3>
-        
+
         <div id="user-profile" style="margin-bottom: 20px;">
             <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 14px;">Your Taste</h4>
             <div id="preferred-genres" style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
@@ -184,24 +190,24 @@
     let searchTimeout;
 
     // Real-time movie search with filtering
-    searchBox.addEventListener('input', function() {
+    searchBox.addEventListener('input', function () {
         const query = this.value.trim();
-        
+
         clearTimeout(searchTimeout);
-        
+
         if (query.length < 2) {
             searchResults.style.display = 'none';
             return;
         }
-        
+
         searchTimeout = setTimeout(() => {
             // Get current filter values
             const currentFilters = getCurrentFilters();
-            
+
             // Build query string with filters
             const params = new URLSearchParams();
             params.append('q', query);
-            
+
             // Add filter parameters
             Object.entries(currentFilters).forEach(([key, value]) => {
                 if (Array.isArray(value)) {
@@ -210,7 +216,7 @@
                     params.append(key, value);
                 }
             });
-            
+
             fetch(`/search/?${params.toString()}`)
                 .then(response => response.json())
                 .then(data => {
@@ -224,7 +230,7 @@
 
     function getCurrentFilters() {
         const filters = {};
-        
+
         // Get selected genres
         const selectedGenres = [];
         document.querySelectorAll('input[name="genres"]:checked').forEach(cb => {
@@ -233,46 +239,46 @@
         if (selectedGenres.length > 0) {
             filters.genres = selectedGenres;
         }
-        
+
         // Get year range
         const yearMin = document.getElementById('year-min').value;
         const yearMax = document.getElementById('year-max').value;
         if (yearMin !== '1900') filters.year_min = yearMin;
         if (yearMax !== '2024') filters.year_max = yearMax;
-        
+
         // Get rating filter
         const minRating = document.getElementById('rating-filter').value;
         if (minRating !== '0') filters.min_rating = minRating;
-        
+
         // Get sort option
         const sortBy = document.getElementById('sort-filter').value;
         if (sortBy !== 'rating') filters.sort_by = sortBy;
-        
+
         return filters;
     }
 
     function updateFilterSummary() {
         const filters = getCurrentFilters();
         let summary = [];
-        
+
         if (filters.genres && filters.genres.length > 0) {
             summary.push(`Genres: ${filters.genres.join(', ')}`);
         }
-        
+
         if (filters.year_min || filters.year_max) {
             const yearRange = `${filters.year_min || '1900'}-${filters.year_max || '2024'}`;
             summary.push(`Years: ${yearRange}`);
         }
-        
+
         if (filters.min_rating) {
             summary.push(`Rating: ${filters.min_rating}+ stars`);
         }
-        
+
         if (filters.sort_by && filters.sort_by !== 'rating') {
             summary.push(`Sort: ${filters.sort_by}`);
         }
-        
-        filterSummaryDiv.innerHTML = summary.length > 0 ? 
+
+        filterSummaryDiv.innerHTML = summary.length > 0 ?
             summary.map(s => `<span style="background: var(--accent-primary); color: white; padding: 1px 6px; border-radius: 8px; margin: 1px; display: inline-block; font-size: 9px;">${s}</span>`).join('') :
             'No filters applied';
     }
@@ -280,7 +286,7 @@
     function updateFilterInputs() {
         const filters = getCurrentFilters();
         let inputs = '';
-        
+
         Object.entries(filters).forEach(([key, value]) => {
             if (Array.isArray(value)) {
                 value.forEach(v => {
@@ -290,7 +296,7 @@
                 inputs += `<input type="hidden" name="${key}" value="${value}">`;
             }
         });
-        
+
         filterInputsDiv.innerHTML = inputs;
     }
 
@@ -299,11 +305,11 @@
             searchResults.style.display = 'none';
             return;
         }
-        
-        searchResults.innerHTML = movies.map(movie => 
+
+        searchResults.innerHTML = movies.map(movie =>
             `<div onclick="selectMovie('${movie.replace(/'/g, "\\'")}')">${movie}</div>`
         ).join('');
-        
+
         searchResults.style.display = 'block';
     }
 
@@ -315,7 +321,7 @@
             updateHiddenInputs();
             updateUserProfile();
         }
-        
+
         searchBox.value = '';
         searchResults.style.display = 'none';
     }
@@ -334,7 +340,7 @@
             selectedMoviesDiv.classList.remove('has-movies');
         } else {
             selectedMoviesDiv.classList.add('has-movies');
-            selectedMoviesDiv.innerHTML = selectedMovies.map(movie => 
+            selectedMoviesDiv.innerHTML = selectedMovies.map(movie =>
                 `<span class="movie-tag">
                     ${movie}
                     <span class="remove" onclick="removeMovie('${movie.replace(/'/g, "\\'")}')">&times;</span>
@@ -348,7 +354,7 @@
     }
 
     function updateHiddenInputs() {
-        hiddenInputsDiv.innerHTML = selectedMovies.map(movie => 
+        hiddenInputsDiv.innerHTML = selectedMovies.map(movie =>
             `<input type="hidden" name="selected_movies" value="${movie}">`
         ).join('');
     }
@@ -369,7 +375,7 @@
         });
 
         if (genres.size > 0) {
-            preferredGenresDiv.innerHTML = Array.from(genres).map(genre => 
+            preferredGenresDiv.innerHTML = Array.from(genres).map(genre =>
                 `<span style="background: var(--accent-primary); color: white; padding: 1px 6px; border-radius: 8px; margin: 1px; display: inline-block; font-size: 9px;">${genre}</span>`
             ).join('');
         } else {
@@ -383,7 +389,7 @@
     const yearMinValue = document.getElementById('year-min-value');
     const yearMaxValue = document.getElementById('year-max-value');
 
-    yearMinSlider.addEventListener('input', function() {
+    yearMinSlider.addEventListener('input', function () {
         yearMinValue.textContent = this.value;
         if (parseInt(this.value) > parseInt(yearMaxSlider.value)) {
             yearMaxSlider.value = this.value;
@@ -393,7 +399,7 @@
         updateFilterInputs();
     });
 
-    yearMaxSlider.addEventListener('input', function() {
+    yearMaxSlider.addEventListener('input', function () {
         yearMaxValue.textContent = this.value;
         if (parseInt(this.value) < parseInt(yearMinSlider.value)) {
             yearMinSlider.value = this.value;
@@ -405,25 +411,25 @@
 
     // Genre checkbox listeners
     document.querySelectorAll('input[name="genres"]').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
+        checkbox.addEventListener('change', function () {
             updateFilterSummary();
             updateFilterInputs();
         });
     });
 
     // Rating and sort listeners
-    document.getElementById('rating-filter').addEventListener('change', function() {
+    document.getElementById('rating-filter').addEventListener('change', function () {
         updateFilterSummary();
         updateFilterInputs();
     });
 
-    document.getElementById('sort-filter').addEventListener('change', function() {
+    document.getElementById('sort-filter').addEventListener('change', function () {
         updateFilterSummary();
         updateFilterInputs();
     });
 
     // Clear filters functionality
-    document.getElementById('clear-filters').addEventListener('click', function() {
+    document.getElementById('clear-filters').addEventListener('click', function () {
         // Reset all filters
         document.querySelectorAll('.genre-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
         yearMinSlider.value = 1990;
@@ -432,18 +438,18 @@
         yearMaxValue.textContent = '2024';
         document.getElementById('rating-filter').value = '0';
         document.getElementById('sort-filter').value = 'rating';
-        
+
         updateFilterSummary();
         updateFilterInputs();
     });
 
     // Form submission handler
-    document.getElementById('recommendation-form').addEventListener('submit', function(e) {
+    document.getElementById('recommendation-form').addEventListener('submit', function (e) {
         updateFilterInputs(); // Ensure filter inputs are up to date
     });
 
     // Hide search results when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
             searchResults.style.display = 'none';
         }
