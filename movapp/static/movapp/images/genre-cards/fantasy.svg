@@ -1,0 +1,35 @@
+<svg width="500" height="750" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="fantasyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#a55eea;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#26de81;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect width="500" height="750" fill="url(#fantasyGradient)"/>
+    
+    <!-- Magic book -->
+    <rect x="180" y="280" width="140" height="100" fill="#8b4513" rx="5"/>
+    <rect x="185" y="285" width="130" height="90" fill="#d2691e" rx="3"/>
+    
+    <!-- Book pages -->
+    <line x1="200" y1="300" x2="300" y2="300" stroke="#fff" stroke-width="1"/>
+    <line x1="200" y1="315" x2="290" y2="315" stroke="#fff" stroke-width="1"/>
+    <line x1="200" y1="330" x2="280" y2="330" stroke="#fff" stroke-width="1"/>
+    <line x1="200" y1="345" x2="295" y2="345" stroke="#fff" stroke-width="1"/>
+    <line x1="200" y1="360" x2="285" y2="360" stroke="#fff" stroke-width="1"/>
+    
+    <!-- Magic sparkles -->
+    <path d="M250 200 L255 210 L265 205 L255 215 L250 225 L245 215 L235 205 L245 210 Z" fill="#fff"/>
+    <path d="M320 250 L322 255 L327 253 L322 258 L320 263 L318 258 L313 253 L318 255 Z" fill="#fff"/>
+    <path d="M150 350 L152 355 L157 353 L152 358 L150 363 L148 358 L143 353 L148 355 Z" fill="#fff"/>
+    <path d="M350 400 L353 407 L360 405 L353 412 L350 419 L347 412 L340 405 L347 407 Z" fill="#fff"/>
+    
+    <!-- Sword in stone -->
+    <ellipse cx="250" cy="450" rx="60" ry="20" fill="#708090"/>
+    <rect x="245" y="400" width="10" height="50" fill="#c0c0c0"/>
+    <rect x="240" y="395" width="20" height="10" fill="#ffd700"/>
+    <circle cx="250" cy="390" r="5" fill="#ffd700"/>
+    
+    <text x="250" y="550" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="32" font-weight="bold">FANTASY</text>
+    <text x="250" y="590" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" opacity="0.9">Magical worlds</text>
+</svg>

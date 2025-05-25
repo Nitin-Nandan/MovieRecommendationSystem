@@ -1,0 +1,30 @@
+<svg width="500" height="750" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="crimeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#4a4a4a;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect width="500" height="750" fill="url(#crimeGradient)"/>
+    
+    <!-- Detective hat -->
+    <ellipse cx="250" cy="250" rx="80" ry="20" fill="#333"/>
+    <path d="M170 250 Q250 200 330 250 Q250 230 170 250" fill="#444"/>
+    
+    <!-- Magnifying glass -->
+    <circle cx="300" cy="350" r="40" fill="none" stroke="#ffd700" stroke-width="6"/>
+    <circle cx="300" cy="350" r="30" fill="none" stroke="#ffd700" stroke-width="2"/>
+    <line x1="330" y1="380" x2="360" y2="410" stroke="#ffd700" stroke-width="8"/>
+    
+    <!-- Fingerprint -->
+    <path d="M150 350 Q170 330 190 350 Q170 370 150 350" stroke="#fff" stroke-width="3" fill="none" opacity="0.7"/>
+    <path d="M155 360 Q170 345 185 360" stroke="#fff" stroke-width="2" fill="none" opacity="0.7"/>
+    <path d="M160 370 Q170 360 180 370" stroke="#fff" stroke-width="2" fill="none" opacity="0.7"/>
+    
+    <!-- Police tape -->
+    <rect x="0" y="450" width="500" height="30" fill="#ffd700"/>
+    <text x="250" y="470" text-anchor="middle" fill="#000" font-family="Arial, sans-serif" font-size="14" font-weight="bold">POLICE LINE DO NOT CROSS</text>
+    
+    <text x="250" y="550" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="32" font-weight="bold">CRIME</text>
+    <text x="250" y="590" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" opacity="0.9">Mystery &amp; suspense</text>
+</svg>

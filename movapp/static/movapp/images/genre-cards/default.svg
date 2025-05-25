@@ -1,0 +1,37 @@
+<svg width="500" height="750" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="defaultGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect width="500" height="750" fill="url(#defaultGradient)"/>
+    
+    <!-- Film reel -->
+    <circle cx="250" cy="300" r="80" fill="#333"/>
+    <circle cx="250" cy="300" r="60" fill="#666"/>
+    <circle cx="250" cy="300" r="20" fill="#333"/>
+    
+    <!-- Film holes -->
+    <circle cx="210" cy="260" r="8" fill="#333"/>
+    <circle cx="290" cy="260" r="8" fill="#333"/>
+    <circle cx="210" cy="340" r="8" fill="#333"/>
+    <circle cx="290" cy="340" r="8" fill="#333"/>
+    <circle cx="180" cy="300" r="8" fill="#333"/>
+    <circle cx="320" cy="300" r="8" fill="#333"/>
+    
+    <!-- Film strip -->
+    <rect x="100" y="400" width="300" height="40" fill="#333"/>
+    <rect x="110" y="405" width="20" height="30" fill="#666"/>
+    <rect x="140" y="405" width="20" height="30" fill="#666"/>
+    <rect x="170" y="405" width="20" height="30" fill="#666"/>
+    <rect x="200" y="405" width="20" height="30" fill="#666"/>
+    <rect x="230" y="405" width="20" height="30" fill="#666"/>
+    <rect x="260" y="405" width="20" height="30" fill="#666"/>
+    <rect x="290" y="405" width="20" height="30" fill="#666"/>
+    <rect x="320" y="405" width="20" height="30" fill="#666"/>
+    <rect x="350" y="405" width="20" height="30" fill="#666"/>
+    
+    <text x="250" y="550" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="32" font-weight="bold">MOVIE</text>
+    <text x="250" y="590" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" opacity="0.9">Cinema classic</text>
+</svg>

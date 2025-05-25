@@ -1,0 +1,43 @@
+<svg width="500" height="750" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="documentaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#2c3e50;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#3498db;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect width="500" height="750" fill="url(#documentaryGradient)"/>
+    
+    <!-- Camera -->
+    <rect x="180" y="250" width="140" height="80" fill="#333" rx="10"/>
+    <circle cx="250" cy="290" r="35" fill="#666"/>
+    <circle cx="250" cy="290" r="25" fill="#333"/>
+    <circle cx="250" cy="290" r="15" fill="#fff" opacity="0.3"/>
+    
+    <!-- Camera lens reflection -->
+    <circle cx="240" cy="280" r="8" fill="#fff" opacity="0.6"/>
+    
+    <!-- Film strip -->
+    <rect x="100" y="380" width="300" height="50" fill="#333"/>
+    <rect x="110" y="385" width="25" height="40" fill="#555"/>
+    <rect x="145" y="385" width="25" height="40" fill="#555"/>
+    <rect x="180" y="385" width="25" height="40" fill="#555"/>
+    <rect x="215" y="385" width="25" height="40" fill="#555"/>
+    <rect x="250" y="385" width="25" height="40" fill="#555"/>
+    <rect x="285" y="385" width="25" height="40" fill="#555"/>
+    <rect x="320" y="385" width="25" height="40" fill="#555"/>
+    <rect x="355" y="385" width="25" height="40" fill="#555"/>
+    
+    <!-- Tripod legs -->
+    <line x1="250" y1="330" x2="200" y2="400" stroke="#666" stroke-width="6"/>
+    <line x1="250" y1="330" x2="300" y2="400" stroke="#666" stroke-width="6"/>
+    <line x1="250" y1="330" x2="250" y2="400" stroke="#666" stroke-width="6"/>
+    
+    <!-- Documentary elements -->
+    <rect x="350" y="180" width="60" height="40" fill="#fff" opacity="0.9"/>
+    <line x1="360" y1="190" x2="390" y2="190" stroke="#333" stroke-width="2"/>
+    <line x1="360" y1="200" x2="385" y2="200" stroke="#333" stroke-width="2"/>
+    <line x1="360" y1="210" x2="390" y2="210" stroke="#333" stroke-width="2"/>
+    
+    <text x="250" y="550" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="32" font-weight="bold">DOCUMENTARY</text>
+    <text x="250" y="590" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" opacity="0.9">Real stories</text>
+</svg>

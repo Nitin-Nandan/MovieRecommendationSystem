@@ -15,7 +15,7 @@ class MovieDataLoader:
         self.svd_model = None
         self.movie_titles = []
         # TMDB API configuration
-        self.tmdb_api_key = "74cdb9b204e5c6f95ffc62fb7ea57b13"  # Replace with your actual API key
+        self.tmdb_api_key = "74cdb9b204e5c6f95ffc62fb7ea57b13"  # Your API key
         self.tmdb_base_url = "https://api.themoviedb.org/3"
         self.tmdb_image_base_url = "https://image.tmdb.org/t/p/w500"
         self.setup_session()
@@ -90,116 +90,47 @@ class MovieDataLoader:
         import re
         return re.sub(r'\s*\(\d{4}\)', '', title).strip()
     
-    def create_glitch_placeholder(self, title):
-        """Create a glitched data URL placeholder for movies without posters"""
-        clean_title = self.clean_movie_title(title)
-        year = self.extract_movie_year(title) or "????"
+    def create_genre_card_placeholder(self, title, genres):
+        """Create a genre-themed illustrated card for movies without posters"""
         
-        # Random glitch messages
-        glitch_messages = [
-            "POSTER CORRUPTED",
-            "SIGNAL LOST",
-            "DATA BREACH",
-            "MEMORY ERROR",
-            "FRAME DAMAGED",
-            "TRANSMISSION FAILED",
-            "DIGITAL GHOST",
-            "PIXEL DECAY"
-        ]
+        # Genre to card mapping
+        genre_mapping = {
+            'action': ['Action', 'Adventure', 'Thriller'],
+            'romance': ['Romance', 'Romantic'],
+            'sci-fi': ['Sci-Fi', 'Science Fiction', 'Sci-fi'],
+            'comedy': ['Comedy', 'Humor'],
+            'fantasy': ['Fantasy', 'Magic', 'Fairy Tale'],
+            'horror': ['Horror', 'Scary'],
+            'drama': ['Drama'],
+            'crime': ['Crime', 'Mystery', 'Detective'],
+            'animation': ['Animation', 'Animated'],
+            'documentary': ['Documentary'],
+            'family': ['Family', 'Children'],
+            'musical': ['Musical', 'Music'],
+            'war': ['War', 'Military'],
+            'western': ['Western'],
+            'sport': ['Sport', 'Sports'],
+            'biography': ['Biography', 'Biographical']
+        }
         
-        # Random glitch colors for Star Wars theme
-        glitch_colors = [
-            "ff0040,00ff40,4000ff",  # RGB split
-            "ff4040,40ff40,4040ff",  # Lighter RGB
-            "dc143c,00ff00,0080ff",  # Sith red, green, blue
-            "ff6b6b,4ecdc4,45b7d1"   # Soft glitch colors
-        ]
+        # Find the best matching genre
+        selected_card = 'default'
         
-        message = random.choice(glitch_messages)
-        colors = random.choice(glitch_colors).split(',')
+        if genres and len(genres) > 0:
+            for genre in genres:
+                genre_lower = genre.lower()
+                for card_type, genre_list in genre_mapping.items():
+                    if any(g.lower() in genre_lower or genre_lower in g.lower() for g in genre_list):
+                        selected_card = card_type
+                        break
+                if selected_card != 'default':
+                    break
         
-        # Create a data URL with SVG glitch effect
-        svg_content = f'''
-        <svg width="500" height="750" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <filter id="glitch">
-                    <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
-                    <feOffset dx="2" dy="1" result="r"/>
-                    <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" in="SourceGraphic" result="g"/>
-                    <feOffset dx="-1" dy="2" result="g"/>
-                    <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" in="SourceGraphic" result="b"/>
-                    <feOffset dx="1" dy="-1" result="b"/>
-                    <feBlend mode="screen" in="r" in2="g" result="rg"/>
-                    <feBlend mode="screen" in="rg" in2="b"/>
-                </filter>
-                <pattern id="noise" patternUnits="userSpaceOnUse" width="100" height="100">
-                    <rect width="100" height="100" fill="#{colors[0]}20"/>
-                    <rect x="20" y="10" width="60" height="5" fill="#{colors[1]}40"/>
-                    <rect x="10" y="40" width="80" height="3" fill="#{colors[2]}30"/>
-                    <rect x="30" y="70" width="40" height="4" fill="#{colors[0]}50"/>
-                </pattern>
-            </defs>
-            
-            <!-- Background -->
-            <rect width="500" height="750" fill="url(#noise)"/>
-            <rect width="500" height="750" fill="#1a1a1a" opacity="0.8"/>
-            
-            <!-- Glitch bars -->
-            <rect x="0" y="100" width="500" height="8" fill="#{colors[0]}" opacity="0.7"/>
-            <rect x="0" y="200" width="500" height="12" fill="#{colors[1]}" opacity="0.6"/>
-            <rect x="0" y="350" width="500" height="6" fill="#{colors[2]}" opacity="0.8"/>
-            <rect x="0" y="500" width="500" height="10" fill="#{colors[0]}" opacity="0.5"/>
-            <rect x="0" y="650" width="500" height="7" fill="#{colors[1]}" opacity="0.7"/>
-            
-            <!-- Movie reel icon -->
-            <circle cx="250" cy="200" r="40" fill="none" stroke="#{colors[2]}" stroke-width="3" opacity="0.6"/>
-            <circle cx="235" cy="185" r="8" fill="#{colors[2]}" opacity="0.6"/>
-            <circle cx="265" cy="185" r="8" fill="#{colors[2]}" opacity="0.6"/>
-            <circle cx="235" cy="215" r="8" fill="#{colors[2]}" opacity="0.6"/>
-            <circle cx="265" cy="215" r="8" fill="#{colors[2]}" opacity="0.6"/>
-            
-            <!-- Title -->
-            <text x="250" y="300" text-anchor="middle" fill="#{colors[0]}" font-family="monospace" font-size="16" font-weight="bold" filter="url(#glitch)">
-                {clean_title[:25]}
-            </text>
-            <text x="250" y="325" text-anchor="middle" fill="#{colors[1]}" font-family="monospace" font-size="14">
-                ({year})
-            </text>
-            
-            <!-- Glitch message -->
-            <text x="250" y="400" text-anchor="middle" fill="#{colors[2]}" font-family="monospace" font-size="12" font-weight="bold">
-                {message}
-            </text>
-            
-            <!-- Loading animation -->
-            <text x="250" y="450" text-anchor="middle" fill="#{colors[0]}" font-family="monospace" font-size="10">
-                LOADING...
-                <animate attributeName="opacity" values="1;0;1" dur="1.5s" repeatCount="indefinite"/>
-            </text>
-            
-            <!-- Static lines -->
-            <line x1="50" y1="500" x2="450" y2="505" stroke="#{colors[1]}" stroke-width="1" opacity="0.4"/>
-            <line x1="80" y1="520" x2="420" y2="518" stroke="#{colors[2]}" stroke-width="1" opacity="0.5"/>
-            <line x1="120" y1="540" x2="380" y2="542" stroke="#{colors[0]}" stroke-width="1" opacity="0.3"/>
-            
-            <!-- Bottom text -->
-            <text x="250" y="600" text-anchor="middle" fill="#{colors[1]}" font-family="monospace" font-size="8" opacity="0.7">
-                POSTER SIGNAL INTERRUPTED
-            </text>
-            <text x="250" y="620" text-anchor="middle" fill="#{colors[2]}" font-family="monospace" font-size="8" opacity="0.6">
-                ATTEMPTING RECONSTRUCTION...
-            </text>
-        </svg>
-        '''
-        
-        # Convert SVG to data URL
-        import base64
-        svg_bytes = svg_content.encode('utf-8')
-        svg_base64 = base64.b64encode(svg_bytes).decode('utf-8')
-        return f"data:image/svg+xml;base64,{svg_base64}"
+        # Return the static file URL for the genre card
+        return f"/static/movapp/images/genre-cards/{selected_card}.svg"
     
-    def search_tmdb_movie(self, title):
-        """Search for movie on TMDB with robust error handling and glitch fallback"""
+    def search_tmdb_movie(self, title, genres=None):
+        """Search for movie on TMDB with robust error handling and genre card fallback"""
         try:
             # Clean the title for better search results
             clean_title = self.clean_movie_title(title)
@@ -231,16 +162,16 @@ class MovieDataLoader:
                         return f"{self.tmdb_image_base_url}{poster_path}"
                         
         except requests.exceptions.ConnectionError:
-            print(f"🎰 Connection glitch for '{title}' - Creating glitch placeholder")
+            print(f"🎨 Connection issue for '{title}' - Using genre card")
         except requests.exceptions.Timeout:
-            print(f"🎰 Timeout glitch for '{title}' - Creating glitch placeholder")
+            print(f"🎨 Timeout for '{title}' - Using genre card")
         except requests.exceptions.RequestException:
-            print(f"🎰 Request glitch for '{title}' - Creating glitch placeholder")
+            print(f"🎨 Request issue for '{title}' - Using genre card")
         except Exception:
-            print(f"🎰 Unknown glitch for '{title}' - Creating glitch placeholder")
+            print(f"🎨 Error for '{title}' - Using genre card")
         
-        # Return glitch placeholder for any error
-        return self.create_glitch_placeholder(title)
+        # Return genre-specific card for any error
+        return self.create_genre_card_placeholder(title, genres)
     
     def search_movies(self, query, limit=10):
         """Search for movies by title"""
@@ -276,7 +207,7 @@ class MovieDataLoader:
         return movie_details['movieId'] if movie_details else None
     
     def get_enhanced_recommendations(self, selected_movies, num_recommendations=20):
-        """Generate enhanced recommendations with ratings, genres, and posters/glitch placeholders"""
+        """Generate enhanced recommendations with ratings, genres, and posters/genre cards"""
         if not self.svd_model:
             # Return enhanced sample recommendations if model not loaded
             sample_recommendations = [
@@ -292,10 +223,10 @@ class MovieDataLoader:
                 {'title': 'Star Wars: Episode IV - A New Hope (1977)', 'predicted_rating': 3.9, 'genres': ['Action', 'Adventure', 'Fantasy']}
             ]
             
-            print("🎬 Fetching movie posters (with glitch protection)...")
+            print("🎬 Fetching movie posters (with genre card protection)...")
             for i, rec in enumerate(sample_recommendations[:num_recommendations]):
                 print(f"📽️ Processing {i+1}/{min(num_recommendations, len(sample_recommendations))}: {rec['title']}")
-                rec['poster_url'] = self.search_tmdb_movie(rec['title'])
+                rec['poster_url'] = self.search_tmdb_movie(rec['title'], rec['genres'])
                 time.sleep(0.1)  # Small delay to avoid overwhelming TMDB
             
             return sample_recommendations[:num_recommendations]
@@ -344,12 +275,12 @@ class MovieDataLoader:
             predictions.sort(key=lambda x: x['predicted_rating'], reverse=True)
             top_predictions = predictions[:num_recommendations]
             
-            print("🎬 Fetching movie posters (with glitch protection)...")
+            print("🎬 Fetching movie posters (with genre card protection)...")
             
             # Fetch posters for top recommendations with progress indication
             for i, movie_data in enumerate(top_predictions):
                 print(f"📽️ Processing {i+1}/{len(top_predictions)}: {movie_data['title']}")
-                movie_data['poster_url'] = self.search_tmdb_movie(movie_data['title'])
+                movie_data['poster_url'] = self.search_tmdb_movie(movie_data['title'], movie_data['genres'])
                 time.sleep(0.1)  # Small delay to avoid overwhelming TMDB
             
             print("✅ Recommendations ready!")
