@@ -87,6 +87,27 @@
                     {% endfor %}
                 </div>
             {% endif %}
+
+            <!-- Export Options Section -->
+            <div style="margin-top: 40px; padding: 25px; background: var(--card-bg); border-radius: 15px; border: 2px solid var(--accent-primary); text-align: center;">
+                <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 1.2em;">📤 Export Your Recommendations</h3>
+                
+                <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                    <!-- CSV Export Button -->
+                    <a href="#" id="export-csv-btn" class="export-btn" style="background: linear-gradient(45deg, #28a745, #20c997); color: white; text-decoration: none; padding: 12px 24px; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3); display: inline-flex; align-items: center; gap: 8px;">
+                        📊 Export as CSV
+                    </a>
+                    
+                    <!-- PDF Export Button -->
+                    <a href="#" id="export-pdf-btn" class="export-btn" style="background: linear-gradient(45deg, #dc3545, #c82333); color: white; text-decoration: none; padding: 12px 24px; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3); display: inline-flex; align-items: center; gap: 8px;">
+                        📄 Export as PDF
+                    </a>
+                </div>
+                
+                <p style="color: var(--text-muted); font-size: 12px; margin-top: 15px; font-style: italic;">
+                    💡 Share your personalized recommendations with friends or save for later!
+                </p>
+            </div>
             
         {% else %}
             <div class="no-recommendations">
@@ -109,14 +130,35 @@
         </div>
 
         <div>
-            <h4 style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">Top Genres</h4>
-            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                <span style="background: var(--accent-primary); color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px;">Action</span>
-                <span style="background: var(--accent-primary); color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px;">Drama</span>
-                <span style="background: var(--accent-primary); color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px;">Thriller</span>
+            <h4 style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">Export Options</h4>
+            <div style="background: var(--card-bg); padding: 15px; border-radius: 10px;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📄 Professional PDF reports</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📊 Data analysis (CSV)</div>
+                <div style="font-size: 11px; color: var(--text-muted);">🎨 Star Wars themed exports</div>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Hidden data elements for export (no red squiggles) -->
+<div style="display: none;">
+    {% for movie in selected_movies %}
+        <span data-selected-movie="{{ movie }}"></span>
+    {% endfor %}
+    
+    {% if applied_filters %}
+        {% for key, value in applied_filters.items %}
+            {% if value %}
+                {% if key == 'genres' %}
+                    {% for genre in value %}
+                        <span data-filter="genres" data-filter-value="{{ genre }}"></span>
+                    {% endfor %}
+                {% else %}
+                    <span data-filter="{{ key }}" data-filter-value="{{ value }}"></span>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 </div>
 
 <script>
@@ -127,7 +169,6 @@
             this.style.boxShadow = '0 8px 25px var(--shadow-color)';
             this.style.zIndex = '10';
             
-            // Add poster zoom effect
             const poster = this.querySelector('.poster-image');
             if (poster) {
                 poster.style.transform = 'scale(1.05)';
@@ -139,7 +180,6 @@
             this.style.boxShadow = '0 2px 8px var(--shadow-color)';
             this.style.zIndex = '1';
             
-            // Reset poster zoom
             const poster = this.querySelector('.poster-image');
             if (poster) {
                 poster.style.transform = 'scale(1)';
@@ -153,6 +193,62 @@
         initialCards.forEach(card => {
             addHoverEffects(card);
         });
+
+        // Export functionality - Clean approach
+        function buildExportUrl(baseUrl) {
+            const params = new URLSearchParams();
+            
+            // Get selected movies from the page
+            const selectedMovieElements = document.querySelectorAll('[data-selected-movie]');
+            selectedMovieElements.forEach(element => {
+                params.append('selected_movies', element.getAttribute('data-selected-movie'));
+            });
+            
+            // Get applied filters from the page
+            const filterElements = document.querySelectorAll('[data-filter]');
+            filterElements.forEach(element => {
+                const filterName = element.getAttribute('data-filter');
+                const filterValue = element.getAttribute('data-filter-value');
+                if (filterValue) {
+                    params.append(filterName, filterValue);
+                }
+            });
+            
+            return `${baseUrl}?${params.toString()}`;
+        }
+        
+        // CSV Export
+        const csvBtn = document.getElementById('export-csv-btn');
+        if (csvBtn) {
+            csvBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = buildExportUrl('/export/csv/');
+            });
+        }
+        
+        // PDF Export
+        const pdfBtn = document.getElementById('export-pdf-btn');
+        if (pdfBtn) {
+            pdfBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = buildExportUrl('/export/pdf/');
+            });
+        }
+        
+        // Add hover effects to export buttons
+        document.querySelectorAll('.export-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+                this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.2)';
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = this.id.includes('csv') ? 
+                    '0 5px 15px rgba(40, 167, 69, 0.3)' : 
+                    '0 5px 15px rgba(220, 53, 69, 0.3)';
+            });
+        });
     });
 
     // Load more functionality
@@ -161,33 +257,23 @@
         const recommendationsGrid = document.getElementById('recommendations-grid');
         const loadMoreBtn = this;
         
-        // Get the additional cards
         const cards = additionalRecs.querySelectorAll('.additional-card');
         
-        // Move cards to the main grid instead of showing them separately
         cards.forEach((card, index) => {
-            // Set initial state for animation
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';
             card.style.transition = 'all 0.3s ease';
             
-            // Add hover event listeners to the new cards
             addHoverEffects(card);
-            
-            // Append to main grid
             recommendationsGrid.appendChild(card);
             
-            // Animate in with delay
             setTimeout(() => {
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
             }, index * 100 + 50);
         });
         
-        // Hide the additional recommendations container
         additionalRecs.style.display = 'none';
-        
-        // Hide load more button
         loadMoreBtn.style.display = 'none';
     });
 </script>
@@ -297,7 +383,7 @@
     
     .movie-info {
         flex: 1;
-        min-width: 0; /* Prevents flex item from overflowing */
+        min-width: 0;
     }
     
     .movie-title {

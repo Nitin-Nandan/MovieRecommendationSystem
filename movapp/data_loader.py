@@ -160,12 +160,12 @@ class MovieDataLoader:
         """Create a genre-themed illustrated card for movies without posters"""
         genre_mapping = {
             'action': ['Action', 'Adventure', 'Thriller'],
-            'romance': ['Romance', 'Romantic'],
+            'romance': ['Romance', 'Romantic', 'Love'],
             'sci-fi': ['Sci-Fi', 'Science Fiction', 'Sci-fi'],
-            'comedy': ['Comedy', 'Humor'],
+            'comedy': ['Comedy', 'Humor', 'Funny'],
             'fantasy': ['Fantasy', 'Magic', 'Fairy Tale'],
             'horror': ['Horror', 'Scary'],
-            'drama': ['Drama'],
+            'drama': ['Drama', 'Dramatic'],
             'crime': ['Crime', 'Mystery', 'Detective'],
             'animation': ['Animation', 'Animated'],
             'documentary': ['Documentary'],
@@ -179,16 +179,41 @@ class MovieDataLoader:
         
         selected_card = 'default'
         
+        print(f"🎨 Checking genres for '{title}': {genres}")  # Debug log
+        
         if genres and len(genres) > 0:
+            # Check each genre against our mapping
             for genre in genres:
-                genre_lower = genre.lower()
+                genre_lower = genre.lower().strip()
+                print(f"🔍 Checking genre: '{genre_lower}'")  # Debug log
+                
                 for card_type, genre_list in genre_mapping.items():
                     if any(g.lower() in genre_lower or genre_lower in g.lower() for g in genre_list):
                         selected_card = card_type
+                        print(f"✅ Matched '{genre_lower}' to '{card_type}' card")  # Debug log
                         break
                 if selected_card != 'default':
                     break
+            
+            # If no match found, use the first genre as fallback
+            if selected_card == 'default' and genres:
+                first_genre = genres[0].lower().strip()
+                print(f"🔄 No match found, using fallback for first genre: '{first_genre}'")
+                
+                # Additional fallback mappings
+                fallback_mapping = {
+                    'war': 'action',
+                    'biography': 'drama',
+                    'history': 'drama',
+                    'mystery': 'crime',
+                    'adventure': 'action',
+                    'thriller': 'action'
+                }
+                
+                selected_card = fallback_mapping.get(first_genre, 'default')
+                print(f"🎯 Fallback result: '{selected_card}' card")
         
+        print(f"🎨 Final card selection for '{title}': {selected_card}")
         return f"/static/movapp/images/genre-cards/{selected_card}.svg"
     
     def search_tmdb_movie(self, title, genres=None):
