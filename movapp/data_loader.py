@@ -40,6 +40,95 @@ class MovieDataLoader:
         key_hash = hashlib.md5(key_string.encode()).hexdigest()
         return f"recommendations_{key_hash}"
     
+    def calculate_confidence_score(self, prediction, genre_similarity=0):
+        """
+        Calculate confidence score for a recommendation
+        Based on SVD prediction certainty and genre overlap
+        """
+        # Base confidence from SVD prediction
+        # SVD predictions typically range from 1-5, with higher ratings being more confident
+        base_confidence = min(prediction.est / 5.0, 1.0)  # Normalize to 0-1
+        
+        # Boost confidence based on genre similarity
+        genre_boost = min(genre_similarity * 0.15, 0.3)  # Max 30% boost
+        
+        # Combine factors
+        final_confidence = min(base_confidence + genre_boost, 1.0)
+        
+        return round(final_confidence * 100, 1)  # Convert to percentage
+    
+    def get_confidence_color(self, confidence_score):
+        """
+        Get color for confidence score
+        """
+        if confidence_score >= 85:
+            return "#28a745"  # Green - Very High
+        elif confidence_score >= 70:
+            return "#17a2b8"  # Blue - High  
+        elif confidence_score >= 55:
+            return "#ffc107"  # Yellow - Medium
+        else:
+            return "#dc3545"  # Red - Low
+    
+    def generate_explanation(self, movie_title, selected_movies, user_preferences, genre_similarity, predicted_rating):
+        """
+        Generate human-readable explanation for why a movie was recommended
+        """
+        explanations = []
+        
+        # Genre-based explanation
+        if genre_similarity > 0:
+            common_genres = []
+            movie_details = self.get_movie_details(movie_title)
+            if movie_details:
+                movie_genres = set(movie_details['genres'])
+                common_genres = list(user_preferences['preferred_genres'].intersection(movie_genres))
+            
+            if common_genres:
+                if len(common_genres) == 1:
+                    explanations.append(f"shares your interest in {common_genres[0]} movies")
+                else:
+                    explanations.append(f"matches your taste for {', '.join(common_genres[:2])} films")
+        
+        # Rating-based explanation
+        if predicted_rating >= 4.5:
+            explanations.append("predicted to be exceptional for your taste")
+        elif predicted_rating >= 4.0:
+            explanations.append("highly rated match for your preferences")
+        elif predicted_rating >= 3.5:
+            explanations.append("good fit based on your movie choices")
+        
+        # Similar movies explanation
+        if len(selected_movies) >= 3:
+            sample_movie = selected_movies[0].split('(')[0].strip()  # Get clean title
+            explanations.append(f"recommended because you enjoyed {sample_movie}")
+        
+        # Combine explanations
+        if explanations:
+            if len(explanations) == 1:
+                return f"Recommended because it {explanations[0]}."
+            elif len(explanations) == 2:
+                return f"Recommended because it {explanations[0]} and is {explanations[1]}."
+            else:
+                return f"Recommended because it {explanations[0]}, is {explanations[1]}, and was {explanations[2]}."
+        else:
+            return "Recommended based on collaborative filtering analysis of similar users."
+    
+    def get_confidence_level(self, confidence_score):
+        """
+        Convert confidence score to human-readable level
+        """
+        if confidence_score >= 85:
+            return "Very High"
+        elif confidence_score >= 70:
+            return "High"
+        elif confidence_score >= 55:
+            return "Medium"
+        elif confidence_score >= 40:
+            return "Moderate"
+        else:
+            return "Low"
+    
     def setup_session(self):
         """Setup requests session with retry logic"""
         retry_strategy = Retry(
@@ -376,7 +465,7 @@ class MovieDataLoader:
         return candidate_movies
     
     def get_filtered_recommendations(self, selected_movies, filters=None, num_recommendations=20):
-        """Generate personalized recommendations with intelligent caching"""
+        """Generate personalized recommendations with intelligent caching, confidence scores, and explanations"""
         
         # Generate cache key
         cache_key = self._generate_cache_key(selected_movies, filters)
@@ -425,13 +514,29 @@ class MovieDataLoader:
                                 genre_boost = movie['genre_similarity'] * 0.3
                                 adjusted_rating = min(pred.est + genre_boost, 5.0)
                                 
+                                # Calculate confidence score
+                                confidence_score = self.calculate_confidence_score(pred, movie['genre_similarity'])
+                                
+                                # Generate explanation
+                                explanation = self.generate_explanation(
+                                    movie['title'], 
+                                    selected_movies, 
+                                    user_preferences, 
+                                    movie['genre_similarity'], 
+                                    adjusted_rating
+                                )
+                                
                                 svd_predictions.append({
                                     'movieId': movie['movieId'],
                                     'title': movie['title'],
                                     'predicted_rating': round(adjusted_rating, 1),
                                     'genres': movie['genres'],
                                     'genre_similarity': movie['genre_similarity'],
-                                    'year': movie.get('year')
+                                    'year': movie.get('year'),
+                                    'confidence_score': confidence_score,
+                                    'confidence_level': self.get_confidence_level(confidence_score),
+                                    'confidence_color': self.get_confidence_color(confidence_score),
+                                    'explanation': explanation
                                 })
                             except Exception as pred_error:
                                 continue
@@ -448,7 +553,7 @@ class MovieDataLoader:
                         
                         top_predictions = svd_predictions[:num_recommendations]
                         
-                        print(f"✨ Generated {len(top_predictions)} filtered and sorted recommendations")
+                        print(f"✨ Generated {len(top_predictions)} filtered and sorted recommendations with confidence scores")
                         
                         # Fetch posters for recommendations
                         print("🎨 Fetching movie posters...")
@@ -457,7 +562,7 @@ class MovieDataLoader:
                             movie_data['poster_url'] = self.search_tmdb_movie(movie_data['title'], movie_data['genres'])
                             time.sleep(0.1)
                         
-                        print("🎯 Filtered recommendations ready!")
+                        print("🎯 Filtered recommendations with ML insights ready!")
                         recommendations = top_predictions
                         
             except Exception as e:
@@ -490,6 +595,15 @@ class MovieDataLoader:
             {'title': 'The Lord of the Rings: The Return of the King (2003)', 'predicted_rating': 4.0, 'genres': ['Adventure', 'Drama', 'Fantasy'], 'year': 2003},
             {'title': 'Star Wars: Episode IV - A New Hope (1977)', 'predicted_rating': 3.9, 'genres': ['Action', 'Adventure', 'Fantasy'], 'year': 1977}
         ]
+        
+        # Add confidence scores and explanations to fallback recommendations
+        for i, rec in enumerate(sample_recommendations):
+            # Simulate confidence scores for fallback
+            confidence_score = round(85 - (i * 3), 1)  # Decreasing confidence
+            rec['confidence_score'] = confidence_score
+            rec['confidence_level'] = self.get_confidence_level(confidence_score)
+            rec['confidence_color'] = self.get_confidence_color(confidence_score)
+            rec['explanation'] = f"Highly rated {rec['genres'][0].lower()} film that appeals to diverse audiences."
         
         # Apply filters to fallback recommendations if provided
         if filters:
