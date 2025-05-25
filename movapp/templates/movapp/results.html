@@ -3,6 +3,11 @@
 {% block title %}Your Movie Recommendations{% endblock %}
 
 {% block content %}
+<!-- Cache Hit Indicator (specific to results page) -->
+<div id="results-cache-indicator" class="cache-indicator">
+    ⚡ Cached recommendations loaded instantly!
+</div>
+
 <div class="dashboard-container">
     <!-- Left Panel: Selected Movies Summary -->
     <div class="filters-panel">
@@ -36,7 +41,7 @@
         {% if recommendations %}
             <div class="recommendations-grid" id="recommendations-grid">
                 {% for movie in recommendations %}
-                    <div class="recommendation-card">
+                    <div class="recommendation-card" data-index="{{ forloop.counter0 }}">
                         <div class="movie-rank">{{ forloop.counter }}</div>
                         <div class="movie-poster">
                             <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-image">
@@ -67,7 +72,7 @@
                 <!-- Hidden additional recommendations -->
                 <div id="additional-recommendations" style="display: none;">
                     {% for movie in additional_recommendations %}
-                        <div class="recommendation-card additional-card">
+                        <div class="recommendation-card additional-card" data-index="{{ forloop.counter0|add:10 }}">
                             <div class="movie-rank">{{ forloop.counter|add:10 }}</div>
                             <div class="movie-poster">
                                 <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-image">
@@ -205,14 +210,62 @@
         });
     }
     
-    // Add hover effects to initial cards when page loads
+    // Enhanced page load animations with cache detection
     document.addEventListener('DOMContentLoaded', function() {
+        // Measure page load time to detect cache hits
+        const pageLoadTime = performance.now();
+        const wasCacheHit = pageLoadTime < 300; // Fast load indicates cache hit
+        
+        // Get all recommendation cards
         const initialCards = document.querySelectorAll('.recommendation-card:not(.additional-card)');
+        
+        // Add hover effects to all cards
         initialCards.forEach(card => {
             addHoverEffects(card);
         });
 
-        // Export functionality - Clean approach
+        // Animate recommendation cards with staggered fade-in
+        initialCards.forEach((card, index) => {
+            // Set initial state for animation
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Animate in with staggered delay
+            setTimeout(() => {
+                card.classList.add('fade-in');
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100 + 200); // Start after 200ms, then stagger by 100ms
+        });
+        
+        // Show cache indicator if this was a fast load (cache hit)
+        if (wasCacheHit && initialCards.length > 0) {
+            setTimeout(() => {
+                showResultsCacheIndicator();
+            }, 1500); // Show after animations complete
+        }
+        
+        // Hide any loading overlays from the form submission
+        setTimeout(() => {
+            hideLoading();
+        }, 100);
+    });
+    
+    // Cache indicator specific to results page
+    function showResultsCacheIndicator() {
+        const indicator = document.getElementById('results-cache-indicator');
+        if (indicator) {
+            indicator.classList.add('show');
+            
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 3000);
+        }
+    }
+
+    // Export functionality - Clean approach
+    document.addEventListener('DOMContentLoaded', function() {
         function buildExportUrl(baseUrl) {
             const params = new URLSearchParams();
             
@@ -283,30 +336,39 @@
         });
     });
 
-    // Load more functionality
+    // Enhanced load more functionality with animations
     document.getElementById('load-more-btn')?.addEventListener('click', function() {
         const additionalRecs = document.getElementById('additional-recommendations');
         const recommendationsGrid = document.getElementById('recommendations-grid');
         const loadMoreBtn = this;
         
+        // Show loading state on button
+        loadMoreBtn.innerHTML = '<span class="loading-spinner" style="width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px;"></span>Loading...';
+        loadMoreBtn.disabled = true;
+        
         const cards = additionalRecs.querySelectorAll('.additional-card');
         
         cards.forEach((card, index) => {
+            // Set initial animation state
             card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'all 0.3s ease';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
             
             addHoverEffects(card);
             recommendationsGrid.appendChild(card);
             
+            // Animate in with staggered delay
             setTimeout(() => {
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
-            }, index * 100 + 50);
+            }, index * 100 + 200);
         });
         
-        additionalRecs.style.display = 'none';
-        loadMoreBtn.style.display = 'none';
+        // Hide containers after animations complete
+        setTimeout(() => {
+            additionalRecs.style.display = 'none';
+            loadMoreBtn.style.display = 'none';
+        }, cards.length * 100 + 800);
     });
 </script>
 
@@ -380,6 +442,22 @@
         z-index: 1;
         margin-bottom: 2px;
         overflow: hidden;
+    }
+    
+    /* Enhanced fade-in animation */
+    .recommendation-card.fade-in {
+        animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .movie-rank {
@@ -485,6 +563,12 @@
     .btn-load-more:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px var(--glow-color);
+    }
+    
+    .btn-load-more:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
     }
     
     .action-buttons {

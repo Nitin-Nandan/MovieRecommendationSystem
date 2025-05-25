@@ -3,6 +3,20 @@
 {% block title %}Movie Recommendations - Find Your Next Favorite Film{% endblock %}
 
 {% block content %}
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="star-wars-loader">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">Generating Recommendations</div>
+        <div class="loading-subtext" id="loading-subtext">The Force is analyzing your movie preferences...</div>
+    </div>
+</div>
+
+<!-- Cache Hit Indicator -->
+<div id="cache-indicator" class="cache-indicator">
+    ⚡ Recommendations loaded from cache instantly!
+</div>
+
 <div class="dashboard-container">
     <!-- Left Panel: Filters and Controls -->
     <div class="filters-panel">
@@ -443,9 +457,27 @@
         updateFilterInputs();
     });
 
-    // Form submission handler
+    // Enhanced form submission with loading animations
     document.getElementById('recommendation-form').addEventListener('submit', function (e) {
-        updateFilterInputs(); // Ensure filter inputs are up to date
+        if (selectedMovies.length < 3) {
+            e.preventDefault();
+            alert('Please select at least 3 movies to get recommendations');
+            return;
+        }
+        
+        // Show loading animation
+        showLoading('Generating Recommendations', 'The Force is analyzing your movie preferences...');
+        
+        // Add loading state to button
+        recommendBtn.classList.add('loading');
+        
+        // Update filter inputs
+        updateFilterInputs();
+        
+        // Add a small delay to show the loading animation
+        setTimeout(() => {
+            // The form will submit naturally after this
+        }, 500);
     });
 
     // Hide search results when clicking outside

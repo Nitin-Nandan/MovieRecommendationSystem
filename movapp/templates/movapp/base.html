@@ -65,13 +65,11 @@
             top: 15px;
             right: 15px;
             z-index: 9999;
-            /* Highest z-index to stay above everything */
             display: flex;
             align-items: center;
             gap: 12px;
             background: var(--bg-secondary);
             padding: 6px 14px;
-            /* Slightly more compact */
             border-radius: 50px;
             box-shadow: 0 8px 25px var(--shadow-color);
             backdrop-filter: blur(10px);
@@ -79,7 +77,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Hover effect for better visibility */
         .force-toggle:hover {
             transform: scale(1.05);
             box-shadow: 0 12px 35px var(--shadow-color);
@@ -221,7 +218,6 @@
                 top: 10px;
                 right: 10px;
                 z-index: 10000;
-                /* Even higher on mobile */
             }
 
             .filters-panel,
@@ -536,6 +532,121 @@
         .theme-transition.active {
             opacity: 1;
         }
+
+        /* Loading Animations for Professional Polish */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .star-wars-loader {
+            text-align: center;
+            color: #FFD700;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 215, 0, 0.2);
+            border-top: 4px solid #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            opacity: 0.8;
+            font-style: italic;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Fade-in animation for recommendations */
+        .recommendations-grid .recommendation-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .recommendations-grid .recommendation-card.fade-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Enhanced button loading state */
+        .btn-recommend.loading {
+            position: relative;
+            color: transparent;
+            pointer-events: none;
+        }
+
+        .btn-recommend.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Cache hit indicator */
+        .cache-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.3s ease;
+        }
+
+        .cache-indicator.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
     </style>
 </head>
 
@@ -578,7 +689,6 @@
                 // Toggle theme
                 const currentTheme = html.getAttribute('data-theme');
                 const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-
                 html.setAttribute('data-theme', newTheme);
                 localStorage.setItem('starWarsTheme', newTheme);
                 updateSideText();
@@ -617,6 +727,38 @@
                 document.body.style.transform = 'scale(1)';
             }, 100);
         });
+
+        // Loading Animation Functions (Global - available to all pages)
+        function showLoading(message = 'Generating Recommendations', subtext = 'The Force is analyzing your movie preferences...') {
+            const overlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
+            const loadingSubtext = document.getElementById('loading-subtext');
+            
+            if (overlay && loadingText && loadingSubtext) {
+                loadingText.textContent = message;
+                loadingSubtext.textContent = subtext;
+                overlay.classList.add('show');
+            }
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+        }
+
+        function showCacheIndicator(message = '⚡ Cached recommendations loaded instantly!') {
+            const indicator = document.getElementById('cache-indicator');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.classList.add('show');
+                
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 3000);
+            }
+        }
     </script>
 </body>
 
