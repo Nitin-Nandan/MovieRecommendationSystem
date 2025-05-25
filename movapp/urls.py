@@ -6,5 +6,6 @@ urlpatterns = [
     path('search/', views.search_movies, name='search_movies'),
     path('filter/', views.filter_recommendations, name='filter_recommendations'),
     path('export/csv/', export_views.export_recommendations_csv, name='export_csv'),
-    path('export/pdf/', export_views.export_recommendations_pdf, name='export_pdf'),
+    path('export/pdf/fun/', export_views.export_recommendations_pdf_fun, name='export_pdf_fun'),
+    path('export/pdf/pro/', export_views.export_recommendations_pdf_pro, name='export_pdf_pro'),
 ]
