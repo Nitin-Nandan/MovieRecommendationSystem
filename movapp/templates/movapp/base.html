@@ -1,49 +1,174 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Movie Recommendation System{% endblock %}</title>
     <style>
+        :root {
+            /* Light Side (Jedi) Theme */
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: rgba(255, 255, 255, 0.95);
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --accent-primary: #667eea;
+            --accent-secondary: #764ba2;
+            --card-bg: #f8f9fa;
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --glow-color: rgba(102, 126, 234, 0.3);
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --side-name: "Light Side";
+            --force-symbol: "⚔️";
+        }
+
+        [data-theme="dark"] {
+            /* Dark Side (Sith) Theme */
+            --bg-primary: linear-gradient(135deg, #1a1a1a 0%, #2d1b69 50%, #8b0000 100%);
+            --bg-secondary: rgba(20, 20, 20, 0.95);
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-muted: #888;
+            --accent-primary: #dc143c;
+            --accent-secondary: #8b0000;
+            --card-bg: #2a2a2a;
+            --border-color: #444;
+            --shadow-color: rgba(220, 20, 60, 0.2);
+            --glow-color: rgba(220, 20, 60, 0.4);
+            --success-color: #dc143c;
+            --warning-color: #ff6b47;
+            --side-name: "Dark Side";
+            --force-symbol: "⚡";
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            transition: all 0.3s ease;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--text-primary);
+            transition: all 0.5s ease;
+        }
+
+        .force-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--bg-secondary);
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--border-color);
+        }
+
+        .force-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .force-symbol {
+            font-size: 16px;
+            filter: drop-shadow(0 0 5px var(--glow-color));
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 70px;
+            height: 35px;
+            background: var(--border-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .toggle-switch::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 29px;
+            height: 29px;
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 
+                0 0 10px var(--glow-color),
+                inset 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        [data-theme="dark"] .toggle-switch::before {
+            transform: translateX(35px);
+            background: linear-gradient(45deg, #dc143c, #8b0000);
+            box-shadow: 
+                0 0 15px rgba(220, 20, 60, 0.6),
+                inset 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-switch::after {
+            content: var(--force-symbol);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            z-index: 1;
+            filter: drop-shadow(0 0 8px var(--glow-color));
+            transition: all 0.3s ease;
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-secondary);
             padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            box-shadow: 
+                0 20px 40px var(--shadow-color),
+                0 0 30px var(--glow-color);
             max-width: 600px;
             width: 90%;
             text-align: center;
-            transition: transform 0.3s ease;
+            transition: all 0.5s ease;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
         }
 
         .container:hover {
             transform: translateY(-5px);
+            box-shadow: 
+                0 25px 50px var(--shadow-color),
+                0 0 40px var(--glow-color);
         }
 
         h1 {
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 10px;
             font-size: 2.5em;
             font-weight: 300;
+            text-shadow: 0 0 20px var(--glow-color);
         }
 
         .subtitle {
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 30px;
             font-size: 1.1em;
         }
@@ -57,16 +182,17 @@
             width: 100%;
             padding: 15px 20px;
             font-size: 16px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 50px;
             outline: none;
             transition: all 0.3s ease;
-            background: #f8f9fa;
+            background: var(--card-bg);
+            color: var(--text-primary);
         }
 
         .search-box:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--glow-color);
             transform: scale(1.02);
         }
 
@@ -74,26 +200,28 @@
             margin: 20px 0;
             min-height: 60px;
             padding: 15px;
-            background: #f1f3f4;
+            background: var(--card-bg);
             border-radius: 15px;
-            border: 2px dashed #ccc;
+            border: 2px dashed var(--border-color);
             transition: all 0.3s ease;
         }
 
         .selected-movies.has-movies {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--accent-primary);
+            background: var(--card-bg);
+            box-shadow: 0 0 15px var(--glow-color);
         }
 
         .movie-tag {
             display: inline-block;
-            background: #667eea;
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
             color: white;
             padding: 8px 15px;
             margin: 5px;
             border-radius: 20px;
             font-size: 14px;
             animation: fadeIn 0.3s ease;
+            box-shadow: 0 0 10px var(--glow-color);
         }
 
         .movie-tag .remove {
@@ -104,10 +232,11 @@
 
         .movie-tag .remove:hover {
             color: #ff6b6b;
+            text-shadow: 0 0 5px #ff6b6b;
         }
 
         .btn-recommend {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
             color: white;
             border: none;
             padding: 15px 40px;
@@ -116,12 +245,12 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 20px;
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 20px var(--glow-color);
         }
 
         .btn-recommend:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 15px 30px var(--glow-color);
         }
 
         .btn-recommend:disabled {
@@ -136,17 +265,125 @@
         }
 
         .instructions {
-            color: #888;
+            color: var(--text-muted);
             font-size: 14px;
             margin-top: 15px;
             font-style: italic;
         }
+
+        /* Lightsaber glow animation */
+        @keyframes lightsaberGlow {
+            0%, 100% { 
+                box-shadow: 0 0 10px var(--glow-color);
+            }
+            50% { 
+                box-shadow: 0 0 25px var(--glow-color), 0 0 35px var(--glow-color);
+            }
+        }
+
+        .force-toggle:hover .toggle-switch {
+            animation: lightsaberGlow 1s ease-in-out infinite;
+        }
+
+        /* Theme transition effect */
+        .theme-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, var(--glow-color) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .theme-transition.active {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
+    <!-- Star Wars Force Toggle -->
+    <div class="force-toggle">
+        <div class="force-label">
+            <span class="force-symbol">⚔️</span>
+            <span class="side-text">Light Side</span>
+        </div>
+        <div class="toggle-switch" id="forceToggle"></div>
+        <div class="force-label">
+            <span class="side-text">Dark Side</span>
+            <span class="force-symbol">⚡</span>
+        </div>
+    </div>
+
+    <!-- Theme transition effect -->
+    <div class="theme-transition" id="themeTransition"></div>
+
     <div class="container">
         {% block content %}
         {% endblock %}
     </div>
+
+    <script>
+        // Star Wars Force Toggle Functionality
+        const forceToggle = document.getElementById('forceToggle');
+        const themeTransition = document.getElementById('themeTransition');
+        const html = document.documentElement;
+        
+        // Load saved theme or default to light
+        const savedTheme = localStorage.getItem('starWarsTheme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+        updateSideText();
+
+        forceToggle.addEventListener('click', function() {
+            // Add transition effect
+            themeTransition.classList.add('active');
+            
+            setTimeout(() => {
+                // Toggle theme
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('starWarsTheme', newTheme);
+                updateSideText();
+                
+                // Remove transition effect
+                setTimeout(() => {
+                    themeTransition.classList.remove('active');
+                }, 100);
+            }, 150);
+        });
+
+        function updateSideText() {
+            const currentTheme = html.getAttribute('data-theme');
+            const sideTexts = document.querySelectorAll('.side-text');
+            
+            if (currentTheme === 'dark') {
+                sideTexts[0].style.opacity = '0.5';
+                sideTexts[1].style.opacity = '1';
+                sideTexts[1].style.fontWeight = 'bold';
+                sideTexts[0].style.fontWeight = 'normal';
+            } else {
+                sideTexts[0].style.opacity = '1';
+                sideTexts[1].style.opacity = '0.5';
+                sideTexts[0].style.fontWeight = 'bold';
+                sideTexts[1].style.fontWeight = 'normal';
+            }
+        }
+
+        // Add some Force magic on page load
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '0';
+            document.body.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+                document.body.style.transform = 'scale(1)';
+            }, 100);
+        });
+    </script>
 </body>
 </html>

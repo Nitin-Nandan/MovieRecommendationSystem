@@ -3,154 +3,166 @@
 {% block title %}Movie Recommendations - Find Your Next Favorite Film{% endblock %}
 
 {% block content %}
-    <h1>🎬 Movie Recommender</h1>
-    <p class="subtitle">Tell us your favorite movies, and we'll find your next obsession!</p>
-    
-    {% if error %}
-        <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-            {{ error }}
-        </div>
-    {% endif %}
-    
-    <form method="post" id="recommendation-form">
-        {% csrf_token %}
-        
-        <div class="search-container">
-            <input 
-                type="text" 
-                class="search-box" 
-                id="movie-search" 
-                placeholder="🔍 Search for movies you love..." 
-                autocomplete="off"
-            >
-            <div id="search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 10px; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
-        </div>
-        
-        <div class="selected-movies" id="selected-movies">
-            <p style="color: #999;">Selected movies will appear here...</p>
-        </div>
-        
-        <!-- Hidden inputs for selected movies -->
-        <div id="hidden-inputs"></div>
-        
-        <button type="submit" class="btn-recommend" id="recommend-btn" disabled>
-            ✨ Get My Recommendations
-        </button>
-        
-        <p class="instructions">
-            💡 Select at least 3 movies to get personalized recommendations
-        </p>
-    </form>
+<h1>🎬 Movie Recommender</h1>
+<p class="subtitle">Tell us your favorite movies, and we'll find your next obsession!</p>
 
-    <script>
-        const searchBox = document.getElementById('movie-search');
-        const searchResults = document.getElementById('search-results');
-        const selectedMoviesDiv = document.getElementById('selected-movies');
-        const hiddenInputsDiv = document.getElementById('hidden-inputs');
-        const recommendBtn = document.getElementById('recommend-btn');
-        let selectedMovies = [];
-        let searchTimeout;
+{% if error %}
+<div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+    {{ error }}
+</div>
+{% endif %}
 
-        // Real-time movie search
-        searchBox.addEventListener('input', function() {
-            const query = this.value.trim();
-            
-            clearTimeout(searchTimeout);
-            
-            if (query.length < 2) {
-                searchResults.style.display = 'none';
-                return;
-            }
-            
-            searchTimeout = setTimeout(() => {
-                fetch(`/search/?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        displaySearchResults(data.movies);
-                    })
-                    .catch(error => {
-                        console.error('Search error:', error);
-                    });
-            }, 300);
-        });
+<form method="post" id="recommendation-form">
+    {% csrf_token %}
 
-        function displaySearchResults(movies) {
-            if (movies.length === 0) {
-                searchResults.style.display = 'none';
-                return;
-            }
-            
-            searchResults.innerHTML = movies.map(movie => 
-                `<div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;" 
+    <div class="search-container">
+        <input type="text" class="search-box" id="movie-search" placeholder="🔍 Search for movies you love..."
+            autocomplete="off">
+        <div id="search-results"
+            style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 10px; max-height: 200px; overflow-y: auto; z-index: 1000;">
+        </div>
+    </div>
+
+    <div class="selected-movies" id="selected-movies">
+        <p style="color: #999;">Selected movies will appear here...</p>
+    </div>
+
+    <!-- Hidden inputs for selected movies -->
+    <div id="hidden-inputs"></div>
+
+    <button type="submit" class="btn-recommend" id="recommend-btn" disabled>
+        ✨ Get My Recommendations
+    </button>
+
+    <p class="instructions">
+        💡 Select at least 3 movies to get personalized recommendations
+    </p>
+</form>
+
+<script>
+    const searchBox = document.getElementById('movie-search');
+    const searchResults = document.getElementById('search-results');
+    const selectedMoviesDiv = document.getElementById('selected-movies');
+    const hiddenInputsDiv = document.getElementById('hidden-inputs');
+    const recommendBtn = document.getElementById('recommend-btn');
+    let selectedMovies = [];
+    let searchTimeout;
+
+    // Real-time movie search
+    searchBox.addEventListener('input', function () {
+        const query = this.value.trim();
+
+        clearTimeout(searchTimeout);
+
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetch(`/search/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    displaySearchResults(data.movies);
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                });
+        }, 300);
+    });
+
+    function displaySearchResults(movies) {
+        if (movies.length === 0) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        searchResults.innerHTML = movies.map(movie =>
+            `<div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;" 
                       onclick="selectMovie('${movie.replace(/'/g, "\\'")}')"
                       onmouseover="this.style.backgroundColor='#f5f5f5'"
                       onmouseout="this.style.backgroundColor='white'">
                     ${movie}
                 </div>`
-            ).join('');
-            
-            searchResults.style.display = 'block';
-        }
+        ).join('');
 
-        function selectMovie(title) {
-            if (!selectedMovies.includes(title)) {
-                selectedMovies.push(title);
-                updateSelectedMovies();
-                updateRecommendButton();
-                updateHiddenInputs();
-            }
-            
-            searchBox.value = '';
-            searchResults.style.display = 'none';
-        }
+        searchResults.style.display = 'block';
+    }
 
-        function removeMovie(title) {
-            selectedMovies = selectedMovies.filter(movie => movie !== title);
+    function selectMovie(title) {
+        if (!selectedMovies.includes(title)) {
+            selectedMovies.push(title);
             updateSelectedMovies();
             updateRecommendButton();
             updateHiddenInputs();
         }
 
-        function updateSelectedMovies() {
-            if (selectedMovies.length === 0) {
-                selectedMoviesDiv.innerHTML = '<p style="color: #999;">Selected movies will appear here...</p>';
-                selectedMoviesDiv.classList.remove('has-movies');
-            } else {
-                selectedMoviesDiv.classList.add('has-movies');
-                selectedMoviesDiv.innerHTML = selectedMovies.map(movie => 
-                    `<span class="movie-tag">
+        searchBox.value = '';
+        searchResults.style.display = 'none';
+    }
+
+    function removeMovie(title) {
+        selectedMovies = selectedMovies.filter(movie => movie !== title);
+        updateSelectedMovies();
+        updateRecommendButton();
+        updateHiddenInputs();
+    }
+
+    function updateSelectedMovies() {
+        if (selectedMovies.length === 0) {
+            selectedMoviesDiv.innerHTML = '<p style="color: #999;">Selected movies will appear here...</p>';
+            selectedMoviesDiv.classList.remove('has-movies');
+        } else {
+            selectedMoviesDiv.classList.add('has-movies');
+            selectedMoviesDiv.innerHTML = selectedMovies.map(movie =>
+                `<span class="movie-tag">
                         ${movie}
                         <span class="remove" onclick="removeMovie('${movie.replace(/'/g, "\\'")}')">&times;</span>
                     </span>`
-                ).join('');
-            }
-        }
-
-        function updateRecommendButton() {
-            recommendBtn.disabled = selectedMovies.length < 3;
-        }
-
-        function updateHiddenInputs() {
-            hiddenInputsDiv.innerHTML = selectedMovies.map(movie => 
-                `<input type="hidden" name="selected_movies" value="${movie}">`
             ).join('');
         }
+    }
 
-        // Hide search results when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
-    </script>
+    function updateRecommendButton() {
+        recommendBtn.disabled = selectedMovies.length < 3;
+    }
 
-    <style>
-        .search-container {
-            position: relative;
+    function updateHiddenInputs() {
+        hiddenInputsDiv.innerHTML = selectedMovies.map(movie =>
+            `<input type="hidden" name="selected_movies" value="${movie}">`
+        ).join('');
+    }
+
+    // Hide search results when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
         }
-        
-        #search-results {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-    </style>
+    });
+</script>
+
+<style>
+    .search-container {
+        position: relative;
+    }
+
+    #search-results {
+        box-shadow: 0 5px 15px var(--shadow-color);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+
+    #search-results div {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        transition: all 0.2s ease;
+    }
+
+    #search-results div:hover {
+        background: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+    }
+</style>
 {% endblock %}
