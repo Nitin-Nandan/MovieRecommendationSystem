@@ -16,12 +16,18 @@ def home(request):
                     'error': 'Please select at least 3 movies to get recommendations.'
                 })
             
-            # Generate recommendations
-            recommendations = movie_data_loader.get_recommendations(selected_movies)
+            # Generate enhanced recommendations (20 total, show 10 initially)
+            all_recommendations = movie_data_loader.get_enhanced_recommendations(selected_movies, 20)
+            
+            # Split into initial and additional recommendations
+            initial_recommendations = all_recommendations[:10]
+            additional_recommendations = all_recommendations[10:20]
             
             return render(request, 'movapp/results.html', {
                 'selected_movies': selected_movies,
-                'recommendations': recommendations
+                'recommendations': initial_recommendations,
+                'additional_recommendations': additional_recommendations,
+                'has_more': len(additional_recommendations) > 0
             })
             
         except Exception as e:
