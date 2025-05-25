@@ -8,6 +8,9 @@ from requests.adapters import HTTPAdapter
 import time
 import random
 from django.conf import settings
+from django.core.cache import cache
+import hashlib
+import json
 
 class MovieDataLoader:
     def __init__(self):
@@ -19,8 +22,23 @@ class MovieDataLoader:
         self.tmdb_api_key = "74cdb9b204e5c6f95ffc62fb7ea57b13"
         self.tmdb_base_url = "https://api.themoviedb.org/3"
         self.tmdb_image_base_url = "https://image.tmdb.org/t/p/w500"
+        
+        # Add cache configuration
+        self.cache_timeout = 1800  # 30 minutes for recommendations
+        
         self.setup_session()
         self.load_data()
+    
+    def _generate_cache_key(self, selected_movies, filters=None):
+        """Generate a unique cache key for recommendations"""
+        # Create a unique key based on selected movies and filters
+        key_data = {
+            'movies': sorted(selected_movies),
+            'filters': filters or {}
+        }
+        key_string = json.dumps(key_data, sort_keys=True)
+        key_hash = hashlib.md5(key_string.encode()).hexdigest()
+        return f"recommendations_{key_hash}"
     
     def setup_session(self):
         """Setup requests session with retry logic"""
@@ -358,82 +376,99 @@ class MovieDataLoader:
         return candidate_movies
     
     def get_filtered_recommendations(self, selected_movies, filters=None, num_recommendations=20):
-        """Generate personalized recommendations with user filters applied"""
+        """Generate personalized recommendations with intelligent caching"""
+        
+        # Generate cache key
+        cache_key = self._generate_cache_key(selected_movies, filters)
+        
+        # Try to get from cache first
+        cached_recommendations = cache.get(cache_key)
+        if cached_recommendations:
+            print(f"🚀 Cache HIT: Retrieved recommendations from cache in milliseconds!")
+            return cached_recommendations
+        
+        print(f"💾 Cache MISS: Generating new recommendations (this will take a moment)")
         
         if not self.svd_model:
             print("⚠️ SVD model not available, using fallback recommendations")
-            return self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
+            recommendations = self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
+        else:
+            try:
+                print(f"🎬 Generating filtered recommendations for: {selected_movies}")
+                print(f"🔧 Applied filters: {filters}")
+                
+                # Step 1: Extract user preferences from selected movies
+                user_preferences = self.extract_user_preferences(selected_movies)
+                
+                if not user_preferences['preferred_genres']:
+                    print("⚠️ Could not extract user preferences, using fallback")
+                    recommendations = self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
+                else:
+                    # Step 2: Find candidate movies with similar content AND apply filters
+                    candidate_movies = self.find_similar_movies_by_content(selected_movies, user_preferences, filters)
+                    
+                    if not candidate_movies:
+                        print("⚠️ No similar movies found after filtering, using fallback")
+                        recommendations = self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
+                    else:
+                        # Step 3: Use SVD to predict ratings for candidate movies
+                        temp_user_id = self.get_safe_temp_user_id()
+                        svd_predictions = []
+                        
+                        print(f"🤖 Using SVD model to predict ratings for {len(candidate_movies)} filtered candidates...")
+                        
+                        for movie in candidate_movies:
+                            try:
+                                pred = self.svd_model.predict(temp_user_id, movie['movieId'])
+                                
+                                # Boost rating based on genre similarity
+                                genre_boost = movie['genre_similarity'] * 0.3
+                                adjusted_rating = min(pred.est + genre_boost, 5.0)
+                                
+                                svd_predictions.append({
+                                    'movieId': movie['movieId'],
+                                    'title': movie['title'],
+                                    'predicted_rating': round(adjusted_rating, 1),
+                                    'genres': movie['genres'],
+                                    'genre_similarity': movie['genre_similarity'],
+                                    'year': movie.get('year')
+                                })
+                            except Exception as pred_error:
+                                continue
+                        
+                        # Step 4: Apply sorting based on user preference
+                        sort_by = filters.get('sort_by', 'rating') if filters else 'rating'
+                        
+                        if sort_by == 'year' and any(p.get('year') for p in svd_predictions):
+                            svd_predictions.sort(key=lambda x: x.get('year', 0), reverse=True)
+                        elif sort_by == 'alphabetical':
+                            svd_predictions.sort(key=lambda x: x['title'])
+                        else:  # Default: rating
+                            svd_predictions.sort(key=lambda x: x['predicted_rating'], reverse=True)
+                        
+                        top_predictions = svd_predictions[:num_recommendations]
+                        
+                        print(f"✨ Generated {len(top_predictions)} filtered and sorted recommendations")
+                        
+                        # Fetch posters for recommendations
+                        print("🎨 Fetching movie posters...")
+                        for i, movie_data in enumerate(top_predictions):
+                            print(f"📽️ Processing {i+1}/{len(top_predictions)}: {movie_data['title']}")
+                            movie_data['poster_url'] = self.search_tmdb_movie(movie_data['title'], movie_data['genres'])
+                            time.sleep(0.1)
+                        
+                        print("🎯 Filtered recommendations ready!")
+                        recommendations = top_predictions
+                        
+            except Exception as e:
+                print(f"❌ Error generating filtered recommendations: {e}")
+                recommendations = self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
         
-        try:
-            print(f"🎬 Generating filtered recommendations for: {selected_movies}")
-            print(f"🔧 Applied filters: {filters}")
-            
-            # Step 1: Extract user preferences from selected movies
-            user_preferences = self.extract_user_preferences(selected_movies)
-            
-            if not user_preferences['preferred_genres']:
-                print("⚠️ Could not extract user preferences, using fallback")
-                return self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
-            
-            # Step 2: Find candidate movies with similar content AND apply filters
-            candidate_movies = self.find_similar_movies_by_content(selected_movies, user_preferences, filters)
-            
-            if not candidate_movies:
-                print("⚠️ No similar movies found after filtering, using fallback")
-                return self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
-            
-            # Step 3: Use SVD to predict ratings for candidate movies
-            temp_user_id = self.get_safe_temp_user_id()
-            svd_predictions = []
-            
-            print(f"🤖 Using SVD model to predict ratings for {len(candidate_movies)} filtered candidates...")
-            
-            for movie in candidate_movies:
-                try:
-                    pred = self.svd_model.predict(temp_user_id, movie['movieId'])
-                    
-                    # Boost rating based on genre similarity
-                    genre_boost = movie['genre_similarity'] * 0.3
-                    adjusted_rating = min(pred.est + genre_boost, 5.0)
-                    
-                    svd_predictions.append({
-                        'movieId': movie['movieId'],
-                        'title': movie['title'],
-                        'predicted_rating': round(adjusted_rating, 1),
-                        'genres': movie['genres'],
-                        'genre_similarity': movie['genre_similarity'],
-                        'year': movie.get('year')
-                    })
-                except Exception as pred_error:
-                    continue
-            
-            # Step 4: Apply sorting based on user preference
-            sort_by = filters.get('sort_by', 'rating') if filters else 'rating'
-            
-            if sort_by == 'year' and any(p.get('year') for p in svd_predictions):
-                svd_predictions.sort(key=lambda x: x.get('year', 0), reverse=True)
-            elif sort_by == 'alphabetical':
-                svd_predictions.sort(key=lambda x: x['title'])
-            else:  # Default: rating
-                svd_predictions.sort(key=lambda x: x['predicted_rating'], reverse=True)
-            
-            top_predictions = svd_predictions[:num_recommendations]
-            
-            print(f"✨ Generated {len(top_predictions)} filtered and sorted recommendations")
-            
-            # Fetch posters for recommendations
-            print("🎨 Fetching movie posters...")
-            for i, movie_data in enumerate(top_predictions):
-                print(f"📽️ Processing {i+1}/{len(top_predictions)}: {movie_data['title']}")
-                movie_data['poster_url'] = self.search_tmdb_movie(movie_data['title'], movie_data['genres'])
-                time.sleep(0.1)
-            
-            print("🎯 Filtered recommendations ready!")
-            return top_predictions
-            
-        except Exception as e:
-            print(f"❌ Error generating filtered recommendations: {e}")
-            return self.get_fallback_recommendations(selected_movies, filters, num_recommendations)
+        # Cache the final recommendations (whether from SVD or fallback)
+        cache.set(cache_key, recommendations, self.cache_timeout)
+        print(f"💾 Cached recommendations for {self.cache_timeout} seconds")
+        
+        return recommendations
     
     def get_enhanced_recommendations(self, selected_movies, num_recommendations=20):
         """Generate enhanced recommendations (backward compatibility)"""

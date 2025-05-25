@@ -134,3 +134,19 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Performance Optimization: Caching Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'movie-recommendations-cache',
+        'TIMEOUT': 1800,  # 30 minutes default timeout
+        'OPTIONS': {
+            'MAX_ENTRIES': 500,
+            'CULL_FREQUENCY': 3,
+        }
+    }
+}
+
+# Cache key prefix for organization
+CACHE_MIDDLEWARE_KEY_PREFIX = 'movie_rec'
