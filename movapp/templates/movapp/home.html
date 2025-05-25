@@ -3,62 +3,186 @@
 {% block title %}Movie Recommendations - Find Your Next Favorite Film{% endblock %}
 
 {% block content %}
-<h1>🎬 Movie Recommender</h1>
-<p class="subtitle">Tell us your favorite movies, and we'll find your next obsession!</p>
+<div class="dashboard-container">
+    <!-- Left Panel: Filters and Controls -->
+    <div class="filters-panel">
+        <h3 class="panel-header">🎛️ Search Filters</h3>
+        
+        <!-- Genre Filter -->
+        <div class="filter-group">
+            <label class="filter-label">Genres</label>
+            <div class="genre-checkboxes" id="genre-checkboxes">
+                <div class="genre-checkbox">
+                    <input type="checkbox" id="action" value="Action">
+                    <label for="action">Action</label>
+                </div>
+                <div class="genre-checkbox">
+                    <input type="checkbox" id="comedy" value="Comedy">
+                    <label for="comedy">Comedy</label>
+                </div>
+                <div class="genre-checkbox">
+                    <input type="checkbox" id="drama" value="Drama">
+                    <label for="drama">Drama</label>
+                </div>
+                <div class="genre-checkbox">
+                    <input type="checkbox" id="horror" value="Horror">
+                    <label for="horror">Horror</label>
+                </div>
+                <div class="genre-checkbox">
+                    <input type="checkbox" id="romance" value="Romance">
+                    <label for="romance">Romance</label>
+                </div>
+                <div class="genre-checkbox">
+                    <input type="checkbox" id="sci-fi" value="Sci-Fi">
+                    <label for="sci-fi">Sci-Fi</label>
+                </div>
+                <div class="genre-checkbox">
+                    <input type="checkbox" id="thriller" value="Thriller">
+                    <label for="thriller">Thriller</label>
+                </div>
+                <div class="genre-checkbox">
+                    <input type="checkbox" id="fantasy" value="Fantasy">
+                    <label for="fantasy">Fantasy</label>
+                </div>
+            </div>
+        </div>
 
-{% if error %}
-<div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-    {{ error }}
-</div>
-{% endif %}
+        <!-- Year Range Filter -->
+        <div class="filter-group">
+            <label class="filter-label">Release Year</label>
+            <div class="range-slider">
+                <input type="range" class="range-input" id="year-min" min="1900" max="2024" value="1990">
+                <input type="range" class="range-input" id="year-max" min="1900" max="2024" value="2024">
+                <div class="range-values">
+                    <span id="year-min-value">1990</span>
+                    <span id="year-max-value">2024</span>
+                </div>
+            </div>
+        </div>
 
-<form method="post" id="recommendation-form">
-    {% csrf_token %}
+        <!-- Rating Filter -->
+        <div class="filter-group">
+            <label class="filter-label">Minimum Rating</label>
+            <select class="filter-input" id="rating-filter">
+                <option value="0">Any Rating</option>
+                <option value="3">3+ Stars</option>
+                <option value="4">4+ Stars</option>
+                <option value="4.5">4.5+ Stars</option>
+            </select>
+        </div>
 
-    <div class="search-container">
-        <input type="text" class="search-box" id="movie-search" placeholder="🔍 Search for movies you love..."
-            autocomplete="off">
-        <div id="search-results"
-            style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 10px; max-height: 200px; overflow-y: auto; z-index: 1000;">
+        <!-- Sort Options -->
+        <div class="filter-group">
+            <label class="filter-label">Sort By</label>
+            <select class="filter-input" id="sort-filter">
+                <option value="rating">Highest Rated</option>
+                <option value="year">Newest First</option>
+                <option value="popularity">Most Popular</option>
+                <option value="alphabetical">A-Z</option>
+            </select>
+        </div>
+
+        <!-- Clear Filters Button -->
+        <button type="button" class="btn-recommend" id="clear-filters" style="background: var(--text-muted); margin-top: 20px; font-size: 14px; padding: 10px 20px;">
+            🔄 Clear Filters
+        </button>
+    </div>
+
+    <!-- Center Panel: Main Content -->
+    <div class="main-content">
+        <div class="main-header">
+            <h1 class="main-title">🎬 Movie Recommender</h1>
+            <p class="main-subtitle">Tell us your favorite movies, and we'll find your next obsession!</p>
+        </div>
+
+        {% if error %}
+            <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                {{ error }}
+            </div>
+        {% endif %}
+        
+        <form method="post" id="recommendation-form">
+            {% csrf_token %}
+            
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-box" 
+                    id="movie-search" 
+                    placeholder="🔍 Search for movies you love..." 
+                    autocomplete="off"
+                >
+                <div id="search-results" style="display: none;"></div>
+            </div>
+            
+            <div class="selected-movies" id="selected-movies">
+                <p style="color: var(--text-muted);">Selected movies will appear here...</p>
+            </div>
+            
+            <!-- Hidden inputs for selected movies -->
+            <div id="hidden-inputs"></div>
+            
+            <button type="submit" class="btn-recommend" id="recommend-btn" disabled>
+                ✨ Get My Recommendations
+            </button>
+            
+            <p class="instructions">
+                💡 Select at least 3 movies to get personalized recommendations
+            </p>
+        </form>
+    </div>
+
+    <!-- Right Panel: Compact Live Preview -->
+    <div class="preview-panel">
+        <h3 class="panel-header">🔮 Preview</h3>
+        
+        <div id="user-profile" style="margin-bottom: 20px;">
+            <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 14px;">Your Taste</h4>
+            <div id="preferred-genres" style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
+                Select movies to see preferences
+            </div>
+        </div>
+
+        <div id="quick-recommendations">
+            <h4 style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">Popular Movies</h4>
+            <div class="preview-item" style="padding: 10px; margin-bottom: 10px;">
+                <div class="preview-title" style="font-size: 12px;">The Shawshank Redemption</div>
+                <div class="preview-meta" style="font-size: 10px;">Drama • 1994 • ⭐ 9.3</div>
+            </div>
+            <div class="preview-item" style="padding: 10px; margin-bottom: 10px;">
+                <div class="preview-title" style="font-size: 12px;">The Dark Knight</div>
+                <div class="preview-meta" style="font-size: 10px;">Action • 2008 • ⭐ 9.0</div>
+            </div>
+            <div class="preview-item" style="padding: 10px; margin-bottom: 10px;">
+                <div class="preview-title" style="font-size: 12px;">Pulp Fiction</div>
+                <div class="preview-meta" style="font-size: 10px;">Crime • 1994 • ⭐ 8.9</div>
+            </div>
         </div>
     </div>
-
-    <div class="selected-movies" id="selected-movies">
-        <p style="color: #999;">Selected movies will appear here...</p>
-    </div>
-
-    <!-- Hidden inputs for selected movies -->
-    <div id="hidden-inputs"></div>
-
-    <button type="submit" class="btn-recommend" id="recommend-btn" disabled>
-        ✨ Get My Recommendations
-    </button>
-
-    <p class="instructions">
-        💡 Select at least 3 movies to get personalized recommendations
-    </p>
-</form>
+</div>
 
 <script>
+    // Same JavaScript as before but with improved spacing
     const searchBox = document.getElementById('movie-search');
     const searchResults = document.getElementById('search-results');
     const selectedMoviesDiv = document.getElementById('selected-movies');
     const hiddenInputsDiv = document.getElementById('hidden-inputs');
     const recommendBtn = document.getElementById('recommend-btn');
+    const preferredGenresDiv = document.getElementById('preferred-genres');
     let selectedMovies = [];
     let searchTimeout;
 
-    // Real-time movie search
-    searchBox.addEventListener('input', function () {
+    // Real-time movie search with filtering
+    searchBox.addEventListener('input', function() {
         const query = this.value.trim();
-
+        
         clearTimeout(searchTimeout);
-
+        
         if (query.length < 2) {
             searchResults.style.display = 'none';
             return;
         }
-
+        
         searchTimeout = setTimeout(() => {
             fetch(`/search/?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
@@ -76,16 +200,11 @@
             searchResults.style.display = 'none';
             return;
         }
-
-        searchResults.innerHTML = movies.map(movie =>
-            `<div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;" 
-                      onclick="selectMovie('${movie.replace(/'/g, "\\'")}')"
-                      onmouseover="this.style.backgroundColor='#f5f5f5'"
-                      onmouseout="this.style.backgroundColor='white'">
-                    ${movie}
-                </div>`
+        
+        searchResults.innerHTML = movies.map(movie => 
+            `<div onclick="selectMovie('${movie.replace(/'/g, "\\'")}')">${movie}</div>`
         ).join('');
-
+        
         searchResults.style.display = 'block';
     }
 
@@ -95,8 +214,9 @@
             updateSelectedMovies();
             updateRecommendButton();
             updateHiddenInputs();
+            updateUserProfile();
         }
-
+        
         searchBox.value = '';
         searchResults.style.display = 'none';
     }
@@ -106,19 +226,20 @@
         updateSelectedMovies();
         updateRecommendButton();
         updateHiddenInputs();
+        updateUserProfile();
     }
 
     function updateSelectedMovies() {
         if (selectedMovies.length === 0) {
-            selectedMoviesDiv.innerHTML = '<p style="color: #999;">Selected movies will appear here...</p>';
+            selectedMoviesDiv.innerHTML = '<p style="color: var(--text-muted);">Selected movies will appear here...</p>';
             selectedMoviesDiv.classList.remove('has-movies');
         } else {
             selectedMoviesDiv.classList.add('has-movies');
-            selectedMoviesDiv.innerHTML = selectedMovies.map(movie =>
+            selectedMoviesDiv.innerHTML = selectedMovies.map(movie => 
                 `<span class="movie-tag">
-                        ${movie}
-                        <span class="remove" onclick="removeMovie('${movie.replace(/'/g, "\\'")}')">&times;</span>
-                    </span>`
+                    ${movie}
+                    <span class="remove" onclick="removeMovie('${movie.replace(/'/g, "\\'")}')">&times;</span>
+                </span>`
             ).join('');
         }
     }
@@ -128,41 +249,71 @@
     }
 
     function updateHiddenInputs() {
-        hiddenInputsDiv.innerHTML = selectedMovies.map(movie =>
+        hiddenInputsDiv.innerHTML = selectedMovies.map(movie => 
             `<input type="hidden" name="selected_movies" value="${movie}">`
         ).join('');
     }
 
-    // Hide search results when clicking outside
-    document.addEventListener('click', function (e) {
+    function updateUserProfile() {
+        if (selectedMovies.length === 0) {
+            preferredGenresDiv.textContent = 'Select movies to see preferences';
+            return;
+        }
+
+        // Extract genres from selected movies (simplified)
+        const genres = new Set();
+        selectedMovies.forEach(movie => {
+            if (movie.toLowerCase().includes('horror')) genres.add('Horror');
+            if (movie.toLowerCase().includes('comedy')) genres.add('Comedy');
+            if (movie.toLowerCase().includes('action')) genres.add('Action');
+            if (movie.toLowerCase().includes('romance')) genres.add('Romance');
+        });
+
+        if (genres.size > 0) {
+            preferredGenresDiv.innerHTML = Array.from(genres).map(genre => 
+                `<span style="background: var(--accent-primary); color: white; padding: 1px 6px; border-radius: 8px; margin: 1px; display: inline-block; font-size: 9px;">${genre}</span>`
+            ).join('');
+        } else {
+            preferredGenresDiv.textContent = 'Analyzing preferences...';
+        }
+    }
+
+    // Filter functionality (same as before)
+    const yearMinSlider = document.getElementById('year-min');
+    const yearMaxSlider = document.getElementById('year-max');
+    const yearMinValue = document.getElementById('year-min-value');
+    const yearMaxValue = document.getElementById('year-max-value');
+
+    yearMinSlider.addEventListener('input', function() {
+        yearMinValue.textContent = this.value;
+        if (parseInt(this.value) > parseInt(yearMaxSlider.value)) {
+            yearMaxSlider.value = this.value;
+            yearMaxValue.textContent = this.value;
+        }
+    });
+
+    yearMaxSlider.addEventListener('input', function() {
+        yearMaxValue.textContent = this.value;
+        if (parseInt(this.value) < parseInt(yearMinSlider.value)) {
+            yearMinSlider.value = this.value;
+            yearMinValue.textContent = this.value;
+        }
+    });
+
+    document.getElementById('clear-filters').addEventListener('click', function() {
+        document.querySelectorAll('.genre-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+        yearMinSlider.value = 1990;
+        yearMaxSlider.value = 2024;
+        yearMinValue.textContent = '1990';
+        yearMaxValue.textContent = '2024';
+        document.getElementById('rating-filter').value = '0';
+        document.getElementById('sort-filter').value = 'rating';
+    });
+
+    document.addEventListener('click', function(e) {
         if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
             searchResults.style.display = 'none';
         }
     });
 </script>
-
-<style>
-    .search-container {
-        position: relative;
-    }
-
-    #search-results {
-        box-shadow: 0 5px 15px var(--shadow-color);
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-    }
-
-    #search-results div {
-        background: var(--bg-secondary) !important;
-        color: var(--text-primary) !important;
-        border-bottom: 1px solid var(--border-color) !important;
-        transition: all 0.2s ease;
-    }
-
-    #search-results div:hover {
-        background: var(--card-bg) !important;
-        color: var(--text-primary) !important;
-    }
-</style>
 {% endblock %}

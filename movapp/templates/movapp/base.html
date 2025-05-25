@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,8 +21,6 @@
             --glow-color: rgba(102, 126, 234, 0.3);
             --success-color: #28a745;
             --warning-color: #ffc107;
-            --side-name: "Light Side";
-            --force-symbol: "⚔️";
         }
 
         [data-theme="dark"] {
@@ -39,8 +38,6 @@
             --glow-color: rgba(220, 20, 60, 0.4);
             --success-color: #dc143c;
             --warning-color: #ff6b47;
-            --side-name: "Dark Side";
-            --force-symbol: "⚡";
         }
 
         * {
@@ -54,27 +51,33 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--bg-primary);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: var(--text-primary);
             transition: all 0.5s ease;
         }
 
         .force-toggle {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            /* Highest z-index to stay above everything */
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             background: var(--bg-secondary);
-            padding: 10px 20px;
+            padding: 6px 14px;
+            /* Slightly more compact */
             border-radius: 50px;
-            box-shadow: 0 10px 30px var(--shadow-color);
+            box-shadow: 0 8px 25px var(--shadow-color);
             backdrop-filter: blur(10px);
             border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        /* Hover effect for better visibility */
+        .force-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px var(--shadow-color);
         }
 
         .force-label {
@@ -112,7 +115,7 @@
             background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
             border-radius: 50%;
             transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            box-shadow: 
+            box-shadow:
                 0 0 10px var(--glow-color),
                 inset 0 0 10px rgba(255, 255, 255, 0.2);
         }
@@ -120,7 +123,7 @@
         [data-theme="dark"] .toggle-switch::before {
             transform: translateX(35px);
             background: linear-gradient(45deg, #dc143c, #8b0000);
-            box-shadow: 
+            box-shadow:
                 0 0 15px rgba(220, 20, 60, 0.6),
                 inset 0 0 10px rgba(255, 255, 255, 0.1);
         }
@@ -137,45 +140,221 @@
             transition: all 0.3s ease;
         }
 
-        .container {
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-areas: "filters main-content preview";
+            gap: 20px;
+            padding: 80px 20px 20px 20px;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .filters-panel {
+            grid-area: filters;
             background: var(--bg-secondary);
-            padding: 40px;
             border-radius: 20px;
-            box-shadow: 
-                0 20px 40px var(--shadow-color),
-                0 0 30px var(--glow-color);
-            max-width: 600px;
-            width: 90%;
-            text-align: center;
-            transition: all 0.5s ease;
+            padding: 25px;
+            box-shadow: 0 10px 30px var(--shadow-color);
             border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
         }
 
-        .container:hover {
-            transform: translateY(-5px);
-            box-shadow: 
-                0 25px 50px var(--shadow-color),
-                0 0 40px var(--glow-color);
+        .main-content {
+            grid-area: main-content;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border: 1px solid var(--border-color);
         }
 
-        h1 {
+        .preview-panel {
+            grid-area: preview;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 250px 1fr 250px;
+                gap: 15px;
+                padding: 70px 15px 15px 15px;
+            }
+
+            .force-toggle {
+                top: 10px;
+                right: 10px;
+                padding: 5px 12px;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "main-content"
+                    "filters"
+                    "preview";
+                gap: 20px;
+                padding: 70px 20px 20px 20px;
+            }
+
+            .force-toggle {
+                top: 10px;
+                right: 10px;
+                z-index: 10000;
+                /* Even higher on mobile */
+            }
+
+            .filters-panel,
+            .preview-panel {
+                position: static;
+            }
+        }
+
+        /* Panel Headers */
+        .panel-header {
             color: var(--text-primary);
-            margin-bottom: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 10px;
+        }
+
+        /* Filter Styles */
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-label {
+            display: block;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+
+        .genre-checkboxes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .genre-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+
+        .genre-checkbox:hover {
+            background: var(--card-bg);
+        }
+
+        .genre-checkbox input[type="checkbox"] {
+            accent-color: var(--accent-primary);
+        }
+
+        .genre-checkbox label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        /* Range Slider Styles */
+        .range-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .range-input {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: var(--border-color);
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        /* Main Content Styles */
+        .main-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .main-title {
+            color: var(--text-primary);
             font-size: 2.5em;
             font-weight: 300;
+            margin-bottom: 10px;
             text-shadow: 0 0 20px var(--glow-color);
         }
 
-        .subtitle {
+        .main-subtitle {
             color: var(--text-secondary);
-            margin-bottom: 30px;
             font-size: 1.1em;
         }
 
+        /* Search Box */
         .search-container {
             position: relative;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .search-box {
@@ -183,7 +362,7 @@
             padding: 15px 20px;
             font-size: 16px;
             border: 2px solid var(--border-color);
-            border-radius: 50px;
+            border-radius: 15px;
             outline: none;
             transition: all 0.3s ease;
             background: var(--card-bg);
@@ -196,6 +375,7 @@
             transform: scale(1.02);
         }
 
+        /* Selected Movies */
         .selected-movies {
             margin: 20px 0;
             min-height: 60px;
@@ -208,7 +388,6 @@
 
         .selected-movies.has-movies {
             border-color: var(--accent-primary);
-            background: var(--card-bg);
             box-shadow: 0 0 15px var(--glow-color);
         }
 
@@ -235,6 +414,7 @@
             text-shadow: 0 0 5px #ff6b6b;
         }
 
+        /* Buttons */
         .btn-recommend {
             background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
             color: white;
@@ -246,6 +426,7 @@
             transition: all 0.3s ease;
             margin-top: 20px;
             box-shadow: 0 10px 20px var(--glow-color);
+            width: 100%;
         }
 
         .btn-recommend:hover {
@@ -259,9 +440,70 @@
             transform: none;
         }
 
+        /* Preview Panel Styles */
+        .preview-item {
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent-primary);
+            transition: all 0.3s ease;
+        }
+
+        .preview-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px var(--shadow-color);
+        }
+
+        .preview-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .preview-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Search Results Dropdown */
+        #search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 5px 15px var(--shadow-color);
+        }
+
+        #search-results div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+        }
+
+        #search-results div:hover {
+            background: var(--card-bg);
+        }
+
+        /* Animations */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .instructions {
@@ -269,20 +511,7 @@
             font-size: 14px;
             margin-top: 15px;
             font-style: italic;
-        }
-
-        /* Lightsaber glow animation */
-        @keyframes lightsaberGlow {
-            0%, 100% { 
-                box-shadow: 0 0 10px var(--glow-color);
-            }
-            50% { 
-                box-shadow: 0 0 25px var(--glow-color), 0 0 35px var(--glow-color);
-            }
-        }
-
-        .force-toggle:hover .toggle-switch {
-            animation: lightsaberGlow 1s ease-in-out infinite;
+            text-align: center;
         }
 
         /* Theme transition effect */
@@ -304,6 +533,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Star Wars Force Toggle -->
     <div class="force-toggle">
@@ -321,35 +551,33 @@
     <!-- Theme transition effect -->
     <div class="theme-transition" id="themeTransition"></div>
 
-    <div class="container">
-        {% block content %}
-        {% endblock %}
-    </div>
+    {% block content %}
+    {% endblock %}
 
     <script>
         // Star Wars Force Toggle Functionality
         const forceToggle = document.getElementById('forceToggle');
         const themeTransition = document.getElementById('themeTransition');
         const html = document.documentElement;
-        
+
         // Load saved theme or default to light
         const savedTheme = localStorage.getItem('starWarsTheme') || 'light';
         html.setAttribute('data-theme', savedTheme);
         updateSideText();
 
-        forceToggle.addEventListener('click', function() {
+        forceToggle.addEventListener('click', function () {
             // Add transition effect
             themeTransition.classList.add('active');
-            
+
             setTimeout(() => {
                 // Toggle theme
                 const currentTheme = html.getAttribute('data-theme');
                 const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                
+
                 html.setAttribute('data-theme', newTheme);
                 localStorage.setItem('starWarsTheme', newTheme);
                 updateSideText();
-                
+
                 // Remove transition effect
                 setTimeout(() => {
                     themeTransition.classList.remove('active');
@@ -360,7 +588,7 @@
         function updateSideText() {
             const currentTheme = html.getAttribute('data-theme');
             const sideTexts = document.querySelectorAll('.side-text');
-            
+
             if (currentTheme === 'dark') {
                 sideTexts[0].style.opacity = '0.5';
                 sideTexts[1].style.opacity = '1';
@@ -375,10 +603,10 @@
         }
 
         // Add some Force magic on page load
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             document.body.style.opacity = '0';
             document.body.style.transform = 'scale(0.95)';
-            
+
             setTimeout(() => {
                 document.body.style.opacity = '1';
                 document.body.style.transform = 'scale(1)';
@@ -386,4 +614,5 @@
         });
     </script>
 </body>
+
 </html>
