@@ -3,355 +3,404 @@
 {% block title %}Your Movie Recommendations{% endblock %}
 
 {% block content %}
-<h1>🎬 Your Recommendations</h1>
-<p class="subtitle">Personalized picks based on your taste</p>
-
-<!-- Selected Movies Section -->
-<div class="selected-section">
-    <h3>📽️ Movies You Selected:</h3>
-    <div class="selected-movies-display">
-        {% for movie in selected_movies %}
-        <span class="selected-movie-tag">{{ movie }}</span>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- Recommendations Section -->
-<div class="recommendations-section">
-    <h3>✨ Recommended for You:</h3>
-
-    {% if recommendations %}
-    <div class="recommendations-grid" id="recommendations-grid">
-        {% for movie in recommendations %}
-        <div class="recommendation-card">
-            <div class="movie-rank">{{ forloop.counter }}</div>
-            <div class="movie-info">
-                <h4 class="movie-title">{{ movie.title }}</h4>
-                <div class="movie-meta">
-                    <span class="rating">⭐ {{ movie.predicted_rating }}/5</span>
-                    <span class="genres">
-                        {% for genre in movie.genres %}
-                        <span class="genre-tag">{{ genre }}</span>
-                        {% endfor %}
-                    </span>
-                </div>
-            </div>
+    <h1>🎬 Your Recommendations</h1>
+    <p class="subtitle">Personalized picks based on your taste</p>
+    
+    <!-- Selected Movies Section -->
+    <div class="selected-section">
+        <h3>📽️ Movies You Selected:</h3>
+        <div class="selected-movies-display">
+            {% for movie in selected_movies %}
+                <span class="selected-movie-tag">{{ movie }}</span>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-
-    <!-- Load More Button -->
-    {% if has_more %}
-    <div class="load-more-section">
-        <button id="load-more-btn" class="btn-load-more">
-            📚 Show 10 More Recommendations
-        </button>
-    </div>
-
-    <!-- Hidden additional recommendations -->
-    <div id="additional-recommendations" style="display: none;">
-        {% for movie in additional_recommendations %}
-        <div class="recommendation-card additional-card">
-            <div class="movie-rank">{{ forloop.counter|add:10 }}</div>
-            <div class="movie-info">
-                <h4 class="movie-title">{{ movie.title }}</h4>
-                <div class="movie-meta">
-                    <span class="rating">⭐ {{ movie.predicted_rating }}/5</span>
-                    <span class="genres">
-                        {% for genre in movie.genres %}
-                        <span class="genre-tag">{{ genre }}</span>
-                        {% endfor %}
-                    </span>
-                </div>
+    
+    <!-- Recommendations Section -->
+    <div class="recommendations-section">
+        <h3>✨ Recommended for You:</h3>
+        
+        {% if recommendations %}
+            <div class="recommendations-grid" id="recommendations-grid">
+                {% for movie in recommendations %}
+                    <div class="recommendation-card">
+                        <div class="movie-rank">{{ forloop.counter }}</div>
+                        <div class="movie-poster">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-image">
+                        </div>
+                        <div class="movie-info">
+                            <h4 class="movie-title">{{ movie.title }}</h4>
+                            <div class="movie-meta">
+                                <span class="rating">⭐ {{ movie.predicted_rating }}/5</span>
+                                <span class="genres">
+                                    {% for genre in movie.genres %}
+                                        <span class="genre-tag">{{ genre }}</span>
+                                    {% endfor %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
-        </div>
-        {% endfor %}
+            
+            <!-- Load More Button -->
+            {% if has_more %}
+                <div class="load-more-section">
+                    <button id="load-more-btn" class="btn-load-more">
+                        📚 Show 10 More Recommendations
+                    </button>
+                </div>
+                
+                <!-- Hidden additional recommendations -->
+                <div id="additional-recommendations" style="display: none;">
+                    {% for movie in additional_recommendations %}
+                        <div class="recommendation-card additional-card">
+                            <div class="movie-rank">{{ forloop.counter|add:10 }}</div>
+                            <div class="movie-poster">
+                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-image">
+                            </div>
+                            <div class="movie-info">
+                                <h4 class="movie-title">{{ movie.title }}</h4>
+                                <div class="movie-meta">
+                                    <span class="rating">⭐ {{ movie.predicted_rating }}/5</span>
+                                    <span class="genres">
+                                        {% for genre in movie.genres %}
+                                            <span class="genre-tag">{{ genre }}</span>
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+        {% else %}
+            <div class="no-recommendations">
+                <p>No recommendations available at the moment. Please try again!</p>
+            </div>
+        {% endif %}
     </div>
-    {% endif %}
-
-    {% else %}
-    <div class="no-recommendations">
-        <p>No recommendations available at the moment. Please try again!</p>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="{% url 'home' %}" class="btn-primary">
+            🔄 Try Different Movies
+        </a>
     </div>
-    {% endif %}
-</div>
 
-<!-- Action Buttons -->
-<div class="action-buttons">
-    <a href="{% url 'home' %}" class="btn-primary">
-        🔄 Try Different Movies
-    </a>
-</div>
-
-<script>
-    // Function to add hover effects to recommendation cards
-    function addHoverEffects(card) {
-        card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateX(8px)';
-            this.style.boxShadow = '0 5px 20px rgba(102, 126, 234, 0.15)';
-            this.style.zIndex = '10';
-        });
-
-        card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateX(0)';
-            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
-            this.style.zIndex = '1';
-        });
-    }
-
-    // Add hover effects to initial cards when page loads
-    document.addEventListener('DOMContentLoaded', function () {
-        const initialCards = document.querySelectorAll('.recommendation-card:not(.additional-card)');
-        initialCards.forEach(card => {
-            addHoverEffects(card);
-        });
-    });
-
-    // Load more functionality
-    document.getElementById('load-more-btn')?.addEventListener('click', function () {
-        const additionalRecs = document.getElementById('additional-recommendations');
-        const recommendationsGrid = document.getElementById('recommendations-grid');
-        const loadMoreBtn = this;
-
-        // Get the additional cards
-        const cards = additionalRecs.querySelectorAll('.additional-card');
-
-        // Move cards to the main grid instead of showing them separately
-        cards.forEach((card, index) => {
-            // Set initial state for animation
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'all 0.3s ease';
-
-            // Add hover event listeners to the new cards
-            addHoverEffects(card);
-
-            // Append to main grid
-            recommendationsGrid.appendChild(card);
-
-            // Animate in with delay
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 100 + 50);
-        });
-
-        // Hide the additional recommendations container
-        additionalRecs.style.display = 'none';
-
-        // Hide load more button
-        loadMoreBtn.style.display = 'none';
-    });
-</script>
-
-<style>
-    .selected-section {
-        background: rgba(102, 126, 234, 0.1);
-        padding: 25px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        border: 2px solid rgba(102, 126, 234, 0.2);
-    }
-
-    [data-theme="dark"] .selected-section {
-        background: rgba(220, 20, 60, 0.1);
-        border: 2px solid rgba(220, 20, 60, 0.2);
-    }
-
-    .selected-section h3 {
-        color: var(--text-primary);
-        margin-bottom: 15px;
-        font-size: 1.2em;
-    }
-
-    .selected-movies-display {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .selected-movie-tag {
-        background: var(--success-color);
-        color: white;
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    .recommendations-section {
-        background: var(--bg-secondary);
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px var(--shadow-color);
-        margin-bottom: 30px;
-        border: 1px solid var(--border-color);
-    }
-
-    .recommendations-section h3 {
-        color: var(--text-primary);
-        margin-bottom: 25px;
-        font-size: 1.3em;
-        text-align: center;
-    }
-
-    .recommendations-grid {
-        display: grid;
-        gap: 15px;
-        position: relative;
-    }
-
-    .recommendation-card {
-        display: flex;
-        align-items: center;
-        padding: 20px;
-        background: var(--card-bg);
-        border-radius: 12px;
-        border-left: 4px solid var(--accent-primary);
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px var(--shadow-color);
-        position: relative;
-        z-index: 1;
-        margin-bottom: 2px;
-    }
-
-    .movie-rank {
-        background: var(--accent-primary);
-        color: white;
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 20px;
-        flex-shrink: 0;
-    }
-
-    .movie-info {
-        flex: 1;
-    }
-
-    .movie-title {
-        margin: 0 0 8px 0;
-        color: var(--text-primary);
-        font-size: 1.1em;
-        font-weight: 600;
-    }
-
-    .movie-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        align-items: center;
-    }
-
-    .rating {
-        background: var(--warning-color);
-        color: var(--text-primary);
-        padding: 4px 10px;
-        border-radius: 15px;
-        font-size: 0.9em;
-        font-weight: 600;
-    }
-
-    [data-theme="dark"] .rating {
-        color: #1a1a1a;
-    }
-
-    .genres {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-
-    .genre-tag {
-        background: var(--border-color);
-        color: var(--text-secondary);
-        padding: 3px 8px;
-        border-radius: 10px;
-        font-size: 0.8em;
-    }
-
-    [data-theme="dark"] .genre-tag {
-        background: #444;
-        color: var(--text-secondary);
-    }
-
-    .load-more-section {
-        text-align: center;
-        margin-top: 25px;
-    }
-
-    .btn-load-more {
-        background: linear-gradient(45deg, var(--success-color), var(--accent-secondary));
-        color: white;
-        border: none;
-        padding: 12px 25px;
-        font-size: 16px;
-        border-radius: 25px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 5px 15px var(--glow-color);
-    }
-
-    .btn-load-more:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px var(--glow-color);
-    }
-
-    .action-buttons {
-        text-align: center;
-    }
-
-    .btn-primary {
-        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
-        color: white;
-        text-decoration: none;
-        padding: 15px 30px;
-        font-size: 16px;
-        border-radius: 50px;
-        display: inline-block;
-        transition: all 0.3s ease;
-        box-shadow: 0 10px 20px var(--glow-color);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 30px var(--glow-color);
-        color: white;
-        text-decoration: none;
-    }
-
-    .no-recommendations {
-        text-align: center;
-        padding: 40px;
-        color: var(--text-secondary);
-        font-style: italic;
-    }
-
-    .additional-card {
-        position: static;
-    }
-
-    @media (max-width: 768px) {
-        .movie-meta {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
+    <script>
+        // Function to add hover effects to recommendation cards
+        function addHoverEffects(card) {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(8px) scale(1.02)';
+                this.style.boxShadow = '0 8px 25px var(--shadow-color)';
+                this.style.zIndex = '10';
+                
+                // Add poster zoom effect
+                const poster = this.querySelector('.poster-image');
+                if (poster) {
+                    poster.style.transform = 'scale(1.05)';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateX(0) scale(1)';
+                this.style.boxShadow = '0 2px 8px var(--shadow-color)';
+                this.style.zIndex = '1';
+                
+                // Reset poster zoom
+                const poster = this.querySelector('.poster-image');
+                if (poster) {
+                    poster.style.transform = 'scale(1)';
+                }
+            });
         }
+        
+        // Add hover effects to initial cards when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const initialCards = document.querySelectorAll('.recommendation-card:not(.additional-card)');
+            initialCards.forEach(card => {
+                addHoverEffects(card);
+            });
+        });
 
+        // Load more functionality
+        document.getElementById('load-more-btn')?.addEventListener('click', function() {
+            const additionalRecs = document.getElementById('additional-recommendations');
+            const recommendationsGrid = document.getElementById('recommendations-grid');
+            const loadMoreBtn = this;
+            
+            // Get the additional cards
+            const cards = additionalRecs.querySelectorAll('.additional-card');
+            
+            // Move cards to the main grid instead of showing them separately
+            cards.forEach((card, index) => {
+                // Set initial state for animation
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.3s ease';
+                
+                // Add hover event listeners to the new cards
+                addHoverEffects(card);
+                
+                // Append to main grid
+                recommendationsGrid.appendChild(card);
+                
+                // Animate in with delay
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100 + 50);
+            });
+            
+            // Hide the additional recommendations container
+            additionalRecs.style.display = 'none';
+            
+            // Hide load more button
+            loadMoreBtn.style.display = 'none';
+        });
+    </script>
+
+    <style>
+        .selected-section {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        [data-theme="dark"] .selected-section {
+            background: rgba(220, 20, 60, 0.1);
+            border: 2px solid rgba(220, 20, 60, 0.2);
+        }
+        
+        .selected-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .selected-movies-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .selected-movie-tag {
+            background: var(--success-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .recommendations-section {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .recommendations-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            font-size: 1.3em;
+            text-align: center;
+        }
+        
+        .recommendations-grid {
+            display: grid;
+            gap: 20px;
+            position: relative;
+        }
+        
         .recommendation-card {
-            padding: 15px;
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--accent-primary);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            position: relative;
+            z-index: 1;
+            margin-bottom: 2px;
+            overflow: hidden;
         }
-
+        
         .movie-rank {
-            width: 30px;
-            height: 30px;
-            margin-right: 15px;
+            background: var(--accent-primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+            font-size: 16px;
         }
-    }
-</style>
-
+        
+        .movie-poster {
+            margin-right: 20px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .poster-image {
+            width: 80px;
+            height: 120px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            border-radius: 8px;
+        }
+        
+        .movie-info {
+            flex: 1;
+            min-width: 0; /* Prevents flex item from overflowing */
+        }
+        
+        .movie-title {
+            margin: 0 0 10px 0;
+            color: var(--text-primary);
+            font-size: 1.1em;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .movie-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .rating {
+            background: var(--warning-color);
+            color: var(--text-primary);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        [data-theme="dark"] .rating {
+            color: #1a1a1a;
+        }
+        
+        .genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .genre-tag {
+            background: var(--border-color);
+            color: var(--text-secondary);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+        
+        [data-theme="dark"] .genre-tag {
+            background: #444;
+            color: var(--text-secondary);
+        }
+        
+        .load-more-section {
+            text-align: center;
+            margin-top: 25px;
+        }
+        
+        .btn-load-more {
+            background: linear-gradient(45deg, var(--success-color), var(--accent-secondary));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px var(--glow-color);
+        }
+        
+        .btn-load-more:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--glow-color);
+        }
+        
+        .action-buttons {
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 50px;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px var(--glow-color);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px var(--glow-color);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .no-recommendations {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        .additional-card {
+            position: static;
+        }
+        
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
+            .recommendation-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px;
+            }
+            
+            .movie-rank {
+                margin-bottom: 15px;
+                margin-right: 0;
+            }
+            
+            .movie-poster {
+                margin-bottom: 15px;
+                margin-right: 0;
+            }
+            
+            .poster-image {
+                width: 120px;
+                height: 180px;
+            }
+            
+            .movie-meta {
+                justify-content: center;
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
 {% endblock %}
