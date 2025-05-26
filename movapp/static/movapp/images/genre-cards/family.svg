@@ -1,0 +1,39 @@
+<svg width="500" height="750" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="familyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#feca57;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff9f43;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="500" height="750" fill="url(#familyGradient)"/>
+
+  <!-- TV screen -->
+  <rect x="150" y="200" width="200" height="130" rx="15" ry="15" fill="#2d3436" stroke="#ffffff" stroke-width="3"/>
+  <polygon points="220,230 260,265 220,300" fill="#ffffff"/>
+
+  <!-- Family figures -->
+  <!-- Adult 1 -->
+  <circle cx="180" cy="420" r="20" fill="#ffeaa7"/>
+  <rect x="160" y="440" width="40" height="50" rx="10" fill="#54a0ff"/>
+
+  <!-- Child -->
+  <circle cx="250" cy="425" r="15" fill="#fab1a0"/>
+  <rect x="235" y="440" width="30" height="40" rx="8" fill="#81ecec"/>
+
+  <!-- Adult 2 -->
+  <circle cx="320" cy="420" r="20" fill="#ffeaa7"/>
+  <rect x="300" y="440" width="40" height="50" rx="10" fill="#fd79a8"/>
+
+  <!-- Ground shadow -->
+  <ellipse cx="250" cy="500" rx="120" ry="15" fill="#000" opacity="0.1"/>
+
+  <!-- Text -->
+  <text x="250" y="600" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="32" font-weight="bold">
+    FAMILY MOVIE
+  </text>
+  <text x="250" y="640" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="16" opacity="0.9">
+    Fun for all ages
+  </text>
+</svg>
