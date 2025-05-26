@@ -465,7 +465,7 @@ class MovieDataLoader:
         return candidate_movies
     
     def get_filtered_recommendations(self, selected_movies, filters=None, num_recommendations=20):
-        """Generate personalized recommendations with intelligent caching, confidence scores, and explanations"""
+        """Generate personalized recommendations with intelligent caching, confidence scores, and explanations - OPTIMIZED FOR PERFORMANCE"""
         
         # Generate cache key
         cache_key = self._generate_cache_key(selected_movies, filters)
@@ -536,7 +536,9 @@ class MovieDataLoader:
                                     'confidence_score': confidence_score,
                                     'confidence_level': self.get_confidence_level(confidence_score),
                                     'confidence_color': self.get_confidence_color(confidence_score),
-                                    'explanation': explanation
+                                    'explanation': explanation,
+                                    # OPTIMIZATION: Use genre cards initially instead of fetching posters
+                                    'poster_url': self.create_genre_card_placeholder(movie['title'], movie['genres'])
                                 })
                             except Exception as pred_error:
                                 continue
@@ -554,15 +556,9 @@ class MovieDataLoader:
                         top_predictions = svd_predictions[:num_recommendations]
                         
                         print(f"✨ Generated {len(top_predictions)} filtered and sorted recommendations with confidence scores")
+                        print("⚡ PERFORMANCE OPTIMIZATION: Returning recommendations immediately with genre cards!")
+                        print("🎨 Real posters will be loaded lazily in the background via AJAX")
                         
-                        # Fetch posters for recommendations
-                        print("🎨 Fetching movie posters...")
-                        for i, movie_data in enumerate(top_predictions):
-                            print(f"📽️ Processing {i+1}/{len(top_predictions)}: {movie_data['title']}")
-                            movie_data['poster_url'] = self.search_tmdb_movie(movie_data['title'], movie_data['genres'])
-                            time.sleep(0.1)
-                        
-                        print("🎯 Filtered recommendations with ML insights ready!")
                         recommendations = top_predictions
                         
             except Exception as e:
@@ -574,6 +570,14 @@ class MovieDataLoader:
         print(f"💾 Cached recommendations for {self.cache_timeout} seconds")
         
         return recommendations
+    
+    def get_poster_for_movie(self, title, genres=None):
+        """
+        NEW: Get poster for a specific movie (for lazy loading via AJAX)
+        This method will be called to fetch individual posters in the background
+        """
+        print(f"🎨 Lazy loading poster for: {title}")
+        return self.search_tmdb_movie(title, genres)
     
     def get_enhanced_recommendations(self, selected_movies, num_recommendations=20):
         """Generate enhanced recommendations (backward compatibility)"""
@@ -604,6 +608,8 @@ class MovieDataLoader:
             rec['confidence_level'] = self.get_confidence_level(confidence_score)
             rec['confidence_color'] = self.get_confidence_color(confidence_score)
             rec['explanation'] = f"Highly rated {rec['genres'][0].lower()} film that appeals to diverse audiences."
+            # OPTIMIZATION: Use genre cards initially for fallback too
+            rec['poster_url'] = self.create_genre_card_placeholder(rec['title'], rec['genres'])
         
         # Apply filters to fallback recommendations if provided
         if filters:
@@ -636,9 +642,6 @@ class MovieDataLoader:
         elif sort_by == 'alphabetical':
             sample_recommendations.sort(key=lambda x: x['title'])
         # rating is already sorted
-        
-        for i, rec in enumerate(sample_recommendations[:num_recommendations]):
-            rec['poster_url'] = self.search_tmdb_movie(rec['title'], rec['genres'])
         
         return sample_recommendations[:num_recommendations]
 

@@ -41,17 +41,21 @@
         {% if recommendations %}
         <div class="recommendations-grid" id="recommendations-grid">
             {% for movie in recommendations %}
-            <div class="recommendation-card" data-index="{{ forloop.counter0 }}">
+            <div class="recommendation-card" data-index="{{ forloop.counter0 }}" data-movie-title="{{ movie.title }}" data-movie-genres="{{ movie.genres|join:',' }}">
                 <div class="movie-rank">{{ forloop.counter }}</div>
                 <div class="movie-poster">
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-image">
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-image" data-original-src="{{ movie.poster_url }}">
+                    <!-- Loading overlay for poster replacement -->
+                    <div class="poster-loading" style="display: none;">
+                        <div class="poster-spinner"></div>
+                    </div>
                 </div>
                 <div class="movie-info">
                     <h4 class="movie-title">{{ movie.title }}</h4>
                     <div class="movie-meta">
                         <span class="rating">⭐ {{ movie.predicted_rating }}/5</span>
 
-                        <!-- Confidence Score Display - FIXED -->
+                        <!-- Confidence Score Display -->
                         <div class="confidence-container">
                             <div class="confidence-label">
                                 <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">
@@ -83,57 +87,16 @@
             {% endfor %}
         </div>
 
-        <!-- Load More Button -->
+        <!-- Infinite Scroll Load More Button -->
         {% if has_more %}
-        <div class="load-more-section">
+        <div class="load-more-section" id="load-more-section">
             <button id="load-more-btn" class="btn-load-more">
-                📚 Show 10 More Recommendations
+                📚 Load 10 More Recommendations
             </button>
-        </div>
-
-        <!-- Hidden additional recommendations -->
-        <div id="additional-recommendations" style="display: none;">
-            {% for movie in additional_recommendations %}
-            <div class="recommendation-card additional-card" data-index="{{ forloop.counter0|add:10 }}">
-                <div class="movie-rank">{{ forloop.counter|add:10 }}</div>
-                <div class="movie-poster">
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-image">
-                </div>
-                <div class="movie-info">
-                    <h4 class="movie-title">{{ movie.title }}</h4>
-                    <div class="movie-meta">
-                        <span class="rating">⭐ {{ movie.predicted_rating }}/5</span>
-
-                        <!-- Confidence Score Display - FIXED -->
-                        <div class="confidence-container">
-                            <div class="confidence-label">
-                                <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">
-                                    Confidence: {{ movie.confidence_level }}
-                                </span>
-                            </div>
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" style="width: {{ movie.confidence_score }}%; background: {{ movie.confidence_color }};"></div>
-                            </div>
-                            <span class="confidence-percentage">{{ movie.confidence_score }}%</span>
-                        </div>
-
-                        <span class="genres">
-                            {% for genre in movie.genres %}
-                            <span class="genre-tag">{{ genre }}</span>
-                            {% endfor %}
-                        </span>
-                    </div>
-
-                    <!-- Explanation Display -->
-                    <div class="explanation-container">
-                        <div class="explanation-text">
-                            <i class="fas fa-lightbulb" style="color: var(--accent-primary); margin-right: 5px;"></i>
-                            {{ movie.explanation }}
-                        </div>
-                    </div>
-                </div>
+            <div id="loading-spinner" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading more recommendations...</p>
             </div>
-            {% endfor %}
         </div>
         {% endif %}
 
@@ -183,27 +146,22 @@
         {% endif %}
     </div>
 
-    <!-- Right Panel: Enhanced Analytics -->
+    <!-- Right Panel: Fixed Insights -->
     <div class="preview-panel">
-        <h3 class="panel-header">🧠 ML Insights</h3>
+        <h3 class="panel-header">🔮 Insights</h3>
 
         <div style="margin-bottom: 20px;">
             <h4 style="color: var(--text-secondary); margin-bottom: 10px; font-size: 14px;">Recommendation Stats</h4>
             <div style="background: var(--card-bg); padding: 15px; border-radius: 10px;">
-                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Total Recommendations: <strong>{{ recommendations|length }}</strong></div>
-                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Avg Confidence: <strong>
-                        {% if recommendations %}
-                        {% with total=0 count=0 %}
-                        {% for movie in recommendations %}
-                        {% if movie.confidence_score %}
-                        {% with total=total|add:movie.confidence_score count=count|add:1 %}{% endwith %}
-                        {% endif %}
-                        {% endfor %}
-                        {% if count > 0 %}{{ total|floatformat:1 }}%{% else %}N/A{% endif %}
-                        {% endwith %}
-                        {% else %}N/A{% endif %}
-                    </strong></div>
-                <div style="font-size: 12px; color: var(--text-muted);">Based on: <strong>{{ selected_movies|length }} movies</strong></div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                    Total Recommendations: <strong id="total-recs-display">{{ total_recommendations|default:"0" }}</strong>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                    Avg Confidence: <strong id="avg-confidence-display">{{ avg_confidence|default:"N/A" }}{% if avg_confidence %}%{% endif %}</strong>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted);">
+                    Currently Showing: <strong id="current-showing">{{ recommendations|length }}</strong>
+                </div>
             </div>
         </div>
 
@@ -236,7 +194,7 @@
     </div>
 </div>
 
-<!-- Hidden data elements for export (no red squiggles) -->
+<!-- Hidden data for infinite scroll -->
 <div style="display: none;">
     {% for movie in selected_movies %}
     <span data-selected-movie="{{ movie }}"></span>
@@ -255,9 +213,20 @@
     {% endif %}
     {% endfor %}
     {% endif %}
+
+    <!-- Hidden data for infinite scroll -->
+    <span id="current-page" data-page="{{ current_page|default:1 }}"></span>
+    <span id="has-more" data-has-more="{{ has_more|yesno:'true,false' }}"></span>
 </div>
 
 <script>
+    // Global variables for infinite scroll
+    let currentPage = parseInt(document.getElementById('current-page').dataset.page);
+    let hasMore = document.getElementById('has-more').dataset.hasMore === 'true';
+    let isLoading = false;
+    let posterLoadQueue = [];
+    let isProcessingPosters = false;
+
     // Function to add hover effects to recommendation cards
     function addHoverEffects(card) {
         card.addEventListener('mouseenter', function () {
@@ -283,14 +252,109 @@
         });
     }
 
-    // Enhanced page load animations with cache detection
+    // NEW: Lazy poster loading functionality
+    function loadPosterForCard(card) {
+        const img = card.querySelector('.poster-image');
+        const movieTitle = card.dataset.movieTitle;
+        const movieGenres = card.dataset.movieGenres ? card.dataset.movieGenres.split(',') : [];
+        
+        // Skip if already loading or loaded
+        if (img.dataset.posterLoading === 'true' || img.dataset.posterLoaded === 'true') {
+            return;
+        }
+        
+        // Mark as loading
+        img.dataset.posterLoading = 'true';
+        
+        console.log(`🎨 Starting lazy load for: ${movieTitle}`);
+        
+        // Make AJAX call to get real poster
+        fetch('/get-poster/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                title: movieTitle,
+                genres: movieGenres
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.poster_url !== img.src) {
+                // Smoothly replace the poster
+                replacePosterSmooth(img, data.poster_url);
+                img.dataset.posterLoaded = 'true';
+                console.log(`✅ Poster loaded for: ${movieTitle}`);
+            }
+        })
+        .catch(error => {
+            console.error(`❌ Error loading poster for ${movieTitle}:`, error);
+        })
+        .finally(() => {
+            img.dataset.posterLoading = 'false';
+        });
+    }
+
+    // Smooth poster replacement with fade effect
+    function replacePosterSmooth(img, newSrc) {
+        // Create new image to preload
+        const newImg = new Image();
+        newImg.onload = function() {
+            // Fade out current image
+            img.style.transition = 'opacity 0.3s ease';
+            img.style.opacity = '0.3';
+            
+            setTimeout(() => {
+                // Replace source and fade in
+                img.src = newSrc;
+                img.style.opacity = '1';
+                
+                // Add subtle glow effect for new poster
+                img.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.3)';
+                setTimeout(() => {
+                    img.style.boxShadow = '';
+                }, 1000);
+            }, 150);
+        };
+        newImg.src = newSrc;
+    }
+
+    // Process poster loading queue
+    function processPosterQueue() {
+        if (isProcessingPosters || posterLoadQueue.length === 0) {
+            return;
+        }
+        
+        isProcessingPosters = true;
+        const card = posterLoadQueue.shift();
+        
+        loadPosterForCard(card);
+        
+        // Process next poster after a short delay to avoid overwhelming the server
+        setTimeout(() => {
+            isProcessingPosters = false;
+            processPosterQueue();
+        }, 200);
+    }
+
+    // Add cards to poster loading queue
+    function queuePosterLoading(cards) {
+        cards.forEach(card => {
+            posterLoadQueue.push(card);
+        });
+        processPosterQueue();
+    }
+
+    // Enhanced page load animations with cache detection and lazy poster loading
     document.addEventListener('DOMContentLoaded', function () {
         // Measure page load time to detect cache hits
         const pageLoadTime = performance.now();
-        const wasCacheHit = pageLoadTime < 300; // Fast load indicates cache hit
+        const wasCacheHit = pageLoadTime < 300;
 
         // Get all recommendation cards
-        const initialCards = document.querySelectorAll('.recommendation-card:not(.additional-card)');
+        const initialCards = document.querySelectorAll('.recommendation-card');
 
         // Add hover effects to all cards
         initialCards.forEach(card => {
@@ -299,30 +363,37 @@
 
         // Animate recommendation cards with staggered fade-in
         initialCards.forEach((card, index) => {
-            // Set initial state for animation
             card.style.opacity = '0';
             card.style.transform = 'translateY(30px)';
             card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
 
-            // Animate in with staggered delay
             setTimeout(() => {
                 card.classList.add('fade-in');
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
-            }, index * 100 + 200); // Start after 200ms, then stagger by 100ms
+            }, index * 100 + 200);
         });
 
-        // Show cache indicator if this was a fast load (cache hit)
+        // Show cache indicator if this was a fast load
         if (wasCacheHit && initialCards.length > 0) {
             setTimeout(() => {
                 showResultsCacheIndicator();
-            }, 1500); // Show after animations complete
+            }, 1500);
         }
 
-        // Hide any loading overlays from the form submission
+        // Hide any loading overlays
         setTimeout(() => {
             hideLoading();
         }, 100);
+
+        // Setup infinite scroll
+        setupInfiniteScroll();
+
+        // Start lazy loading posters for initial cards
+        setTimeout(() => {
+            console.log('🎨 Starting lazy poster loading for initial recommendations...');
+            queuePosterLoading(Array.from(initialCards));
+        }, 2000); // Start poster loading after animations complete
     });
 
     // Cache indicator specific to results page
@@ -330,11 +401,204 @@
         const indicator = document.getElementById('results-cache-indicator');
         if (indicator) {
             indicator.classList.add('show');
-
             setTimeout(() => {
                 indicator.classList.remove('show');
             }, 3000);
         }
+    }
+
+    // Setup infinite scroll functionality
+    function setupInfiniteScroll() {
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', loadMoreRecommendations);
+        }
+    }
+
+    // Load more recommendations via AJAX
+    function loadMoreRecommendations() {
+        if (isLoading || !hasMore) return;
+
+        isLoading = true;
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        // Show loading state
+        loadMoreBtn.style.display = 'none';
+        loadingSpinner.style.display = 'block';
+
+        // Prepare data for AJAX request
+        const selectedMovies = Array.from(document.querySelectorAll('[data-selected-movie]'))
+            .map(el => el.getAttribute('data-selected-movie'));
+
+        const filters = {};
+        document.querySelectorAll('[data-filter]').forEach(el => {
+            const filterName = el.getAttribute('data-filter');
+            const filterValue = el.getAttribute('data-filter-value');
+            if (filterValue) {
+                if (!filters[filterName]) filters[filterName] = [];
+                filters[filterName].push(filterValue);
+            }
+        });
+
+        // Make AJAX request
+        fetch('/load-more/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                selected_movies: selectedMovies,
+                filters: filters,
+                page: currentPage + 1
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add new recommendations to the grid
+                const newCards = appendRecommendations(data.recommendations);
+                
+                // Update pagination state
+                currentPage = data.current_page;
+                hasMore = data.has_more;
+                
+                // Update stats
+                updateStats(data.total_recommendations);
+                
+                // Hide/show load more button with proper centering
+                if (hasMore) {
+                    loadMoreBtn.style.display = 'block';
+                    loadMoreBtn.textContent = `📚 Load 10 More Recommendations`;
+    
+                    // FIX: Ensure the button stays centered after loading more content
+                    const loadMoreSection = document.getElementById('load-more-section');
+                    loadMoreSection.style.textAlign = 'center';
+                    loadMoreSection.style.display = 'block';
+                } else {
+                    document.getElementById('load-more-section').style.display = 'none';
+                }
+
+                // Start lazy loading posters for new cards
+                setTimeout(() => {
+                    console.log('🎨 Starting lazy poster loading for new recommendations...');
+                    queuePosterLoading(newCards);
+                }, 1000);
+            } else {
+                console.error('Error loading more recommendations:', data.error);
+                loadMoreBtn.textContent = 'Error loading recommendations';
+            }
+        })
+        .catch(error => {
+            console.error('Network error:', error);
+            loadMoreBtn.textContent = 'Network error - try again';
+        })
+        .finally(() => {
+            isLoading = false;
+            loadingSpinner.style.display = 'none';
+        });
+    }
+
+    // Append new recommendations to the grid
+    function appendRecommendations(recommendations) {
+        const grid = document.getElementById('recommendations-grid');
+        const currentCount = grid.children.length;
+        const newCards = [];
+
+        recommendations.forEach((movie, index) => {
+            const card = createRecommendationCard(movie, currentCount + index + 1);
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            grid.appendChild(card);
+            newCards.push(card);
+
+            // Add hover effects
+            addHoverEffects(card);
+
+            // Animate in with delay
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100 + 200);
+        });
+
+        return newCards;
+    }
+
+    // Create a recommendation card element
+    function createRecommendationCard(movie, rank) {
+        const card = document.createElement('div');
+        card.className = 'recommendation-card';
+        card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+        card.dataset.movieTitle = movie.title;
+        card.dataset.movieGenres = movie.genres.join(',');
+        
+        card.innerHTML = `
+            <div class="movie-rank">${rank}</div>
+            <div class="movie-poster">
+                <img src="${movie.poster_url}" alt="${movie.title}" class="poster-image" data-original-src="${movie.poster_url}">
+                <div class="poster-loading" style="display: none;">
+                    <div class="poster-spinner"></div>
+                </div>
+            </div>
+            <div class="movie-info">
+                <h4 class="movie-title">${movie.title}</h4>
+                <div class="movie-meta">
+                    <span class="rating">⭐ ${movie.predicted_rating}/5</span>
+                    <div class="confidence-container">
+                        <div class="confidence-label">
+                            <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">
+                                Confidence: ${movie.confidence_level}
+                            </span>
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${movie.confidence_score}%; background: ${movie.confidence_color};"></div>
+                        </div>
+                        <span class="confidence-percentage">${movie.confidence_score}%</span>
+                    </div>
+                    <span class="genres">
+                        ${movie.genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
+                    </span>
+                </div>
+                <div class="explanation-container">
+                    <div class="explanation-text">
+                        <i class="fas fa-lightbulb" style="color: var(--accent-primary); margin-right: 5px;"></i>
+                        ${movie.explanation}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return card;
+    }
+
+    // Update stats in the insights panel
+    function updateStats(totalRecommendations) {
+        const currentShowing = document.querySelectorAll('.recommendation-card').length;
+        document.getElementById('current-showing').textContent = currentShowing;
+        
+        if (totalRecommendations) {
+            document.getElementById('total-recs-display').textContent = totalRecommendations;
+        }
+    }
+
+    // Get CSRF token for AJAX requests
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
     // Export functionality - Clean approach
@@ -342,13 +606,11 @@
         function buildExportUrl(baseUrl) {
             const params = new URLSearchParams();
 
-            // Get selected movies from the page
             const selectedMovieElements = document.querySelectorAll('[data-selected-movie]');
             selectedMovieElements.forEach(element => {
                 params.append('selected_movies', element.getAttribute('data-selected-movie'));
             });
 
-            // Get applied filters from the page
             const filterElements = document.querySelectorAll('[data-filter]');
             filterElements.forEach(element => {
                 const filterName = element.getAttribute('data-filter');
@@ -397,7 +659,6 @@
 
             btn.addEventListener('mouseleave', function () {
                 this.style.transform = 'translateY(0)';
-                // Restore original shadow based on button type
                 if (this.id.includes('csv')) {
                     this.style.boxShadow = '0 5px 15px rgba(40, 167, 69, 0.3)';
                 } else if (this.id.includes('fun')) {
@@ -408,44 +669,24 @@
             });
         });
     });
-
-    // Enhanced load more functionality with animations
-    document.getElementById('load-more-btn')?.addEventListener('click', function () {
-        const additionalRecs = document.getElementById('additional-recommendations');
-        const recommendationsGrid = document.getElementById('recommendations-grid');
-        const loadMoreBtn = this;
-
-        // Show loading state on button
-        loadMoreBtn.innerHTML = '<span class="loading-spinner" style="width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px;"></span>Loading...';
-        loadMoreBtn.disabled = true;
-
-        const cards = additionalRecs.querySelectorAll('.additional-card');
-
-        cards.forEach((card, index) => {
-            // Set initial animation state
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-
-            addHoverEffects(card);
-            recommendationsGrid.appendChild(card);
-
-            // Animate in with staggered delay
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 100 + 200);
-        });
-
-        // Hide containers after animations complete
-        setTimeout(() => {
-            additionalRecs.style.display = 'none';
-            loadMoreBtn.style.display = 'none';
-        }, cards.length * 100 + 800);
-    });
 </script>
 
 <style>
+    /* FIX: Ensure load more section always stays centered */
+    .load-more-section {
+        text-align: center !important;
+        width: 100% !important;
+        display: block !important;
+        margin: 25px auto !important;
+        clear: both !important;
+    }
+
+    /* Ensure the button itself is properly centered */
+    .btn-load-more {
+        display: inline-block !important;
+        margin: 0 auto !important;
+    }
+
     /* Existing styles remain the same... */
     .selected-section {
         background: rgba(102, 126, 234, 0.1);
@@ -518,7 +759,6 @@
         overflow: hidden;
     }
 
-    /* Enhanced fade-in animation */
     .recommendation-card.fade-in {
         animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
@@ -528,7 +768,6 @@
             opacity: 0;
             transform: translateY(30px);
         }
-
         to {
             opacity: 1;
             transform: translateY(0);
@@ -556,14 +795,38 @@
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        position: relative;
     }
 
     .poster-image {
         width: 80px;
         height: 120px;
         object-fit: cover;
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
         border-radius: 8px;
+    }
+
+    /* NEW: Poster loading styles */
+    .poster-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .poster-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
     }
 
     .movie-info {
@@ -600,7 +863,6 @@
         color: #1a1a1a;
     }
 
-    /* NEW: Confidence Score Styles */
     .confidence-container {
         display: flex;
         flex-direction: column;
@@ -637,7 +899,6 @@
         text-align: center;
     }
 
-    /* NEW: Explanation Styles */
     .explanation-container {
         margin-top: 12px;
         padding: 10px;
@@ -705,27 +966,19 @@
         transform: none;
     }
 
-    .action-buttons {
+    .loading-spinner {
         text-align: center;
+        color: var(--text-secondary);
     }
 
-    .btn-primary {
-        background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
-        color: white;
-        text-decoration: none;
-        padding: 15px 30px;
-        font-size: 16px;
-        border-radius: 50px;
-        display: inline-block;
-        transition: all 0.3s ease;
-        box-shadow: 0 10px 20px var(--glow-color);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 30px var(--glow-color);
-        color: white;
-        text-decoration: none;
+    .loading-spinner .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--border-color);
+        border-top: 4px solid var(--accent-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
     }
 
     .no-recommendations {
@@ -733,10 +986,6 @@
         padding: 40px;
         color: var(--text-secondary);
         font-style: italic;
-    }
-
-    .additional-card {
-        position: static;
     }
 
     /* Responsive design for mobile */
