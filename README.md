@@ -46,20 +46,20 @@ A professional, ML-powered movie recommender with advanced analytics and user-fr
 
 ### 1. Clone the Repository
 
-    ```bash
-    git clone https://github.com/Nitin-Nandan/CodeClauseInternship_MovieRecommendationSystem.git
-    ```
+```bash
+git clone https://github.com/Nitin-Nandan/CodeClauseInternship_MovieRecommendationSystem.git
+```
 
-    ```bash
-    cd CodeClauseInternship_MovieRecommendationSystem
-    ```
+```bash
+cd CodeClauseInternship_MovieRecommendationSystem
+```
 
 ### 2. Create and Activate the Conda Environment
 
-    ```bash
-    conda env create -f environment.yml
-    ```
+```bash
+conda env create -f environment.yml
+```
 
-    ```bash
-    conda activate movie_rec_env
-    ```
+```bash
+conda activate movie_rec_env
+```
