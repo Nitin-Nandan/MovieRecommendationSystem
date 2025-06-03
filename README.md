@@ -6,17 +6,15 @@ A professional, ML-powered movie recommender with advanced analytics and user-fr
 
 ## Table of Contents
 
-- Features
-- Requirements
-- Quickstart
-- Usage
-- Export Options
-- Analytics Dashboard
-- FAQ
-- Project Structure
-- Contributing
-- License
-- Credits
+- [Features](#features)
+- [Requirements](#requirements)
+- [Quickstart](#quickstart)
+- [Usage](#usage)
+- [Export Options](#export-options)
+- [Analytics Dashboard](#analytics-dashboard)
+- [FAQs](faq)
+- [Project Structure](#project-structure-)
+- [Author](#author)
 
 ---
 
