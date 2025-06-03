@@ -1,0 +1,14 @@
+name: movie_rec_env
+channels:
+  - defaults
+dependencies:
+  - scikit-learn
+  - python=3.11
+  - jupyter
+  - pandas
+  - numpy<2
+  - django
+  - requests
+  - urllib3
+  - reportlab
+  - pip

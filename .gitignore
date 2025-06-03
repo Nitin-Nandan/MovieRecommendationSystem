@@ -44,7 +44,7 @@ env.bak/
 venv.bak/
 
 # Conda
-environment.yml
+//environment.yml
 .conda/
 
 # IDE files

@@ -120,7 +120,7 @@ Open your browser to: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ---
 
-## FAQ
+## FAQs
 
 **Q: Do I need to set up a database?**  
 A: No. The system uses Pandas and pre-trained models.
