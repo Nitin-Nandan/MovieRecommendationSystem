@@ -72,11 +72,11 @@ conda activate movie_rec_env
 3. Extract the zip file.
 4. Place the extracted `ml-20m` folder in the project root directory.
 
-**Required Structure:**
-movie-recommendation-system/
-└── ml-20m/
-├── movies.csv
-└── ratings.csv
+**Required Structure:** <br>
+movie-recommendation-system/ <br>
+└── ml-20m/ <br>
+├── movies.csv <br>
+└── ratings.csv <br>
 
 #### Get the Pre-trained SVD Model:
 - **Option 1: Download Pre-trained Model**  
