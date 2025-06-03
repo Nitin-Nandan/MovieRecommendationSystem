@@ -158,3 +158,15 @@ movie-recommendation-system/ <br>
 ├── environment.yml # Conda environment <br>
 ├── manage.py # Django CLI <br>
 └── README.md # Documentation <br>
+
+---
+
+## Author
+
+### Nitin Nandan <br> - Project Creator & Maintainer
+
+***This project was developed as part of the CodeClause Internship Program.***
+
+---
+
+**Ready to explore personalized movie recommendations!** 🎬🔍
