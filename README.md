@@ -80,7 +80,7 @@ movie-recommendation-system/ <br>
 
 #### Get the Pre-trained SVD Model:
 - **Option 1: Download Pre-trained Model**  
-  [Download `svd_model.pkl`](YOUR_GOOGLE_DRIVE_LINK) and place it in the project root directory.
+  Download [`svd_model.pkl`](https://drive.google.com/file/d/1Ihgls0cMU7SA7ByHBYbBQcEzyutRJEBd/view?usp=sharing) and place it in the project root directory.
 
 - **Option 2: Train the Model Yourself**  
   Use the included Jupyter notebook (`train_model.ipynb`) to generate your own `svd_model.pkl`.
@@ -144,4 +144,17 @@ A: Yes. Use the MovieLens dataset and scikit-learn.
 
 ---
 
-## Project Structure
+## Project Structure <br>
+
+movie-recommendation-system/ <br>
+├── ml-20m/ # Dataset <br>
+├── movapp/ # Django app <br>
+│ ├── static/ # CSS/JS/images <br>
+│ ├── templates/ # HTML templates <br>
+│ ├── data_loader.py # ML/data logic <br>
+│ ├── views.py # App views <br>
+│ ├── export_views.py # CSV/PDF exports <br>
+│ └── analytics_views.py # Analytics endpoints <br>
+├── environment.yml # Conda environment <br>
+├── manage.py # Django CLI <br>
+└── README.md # Documentation <br>
