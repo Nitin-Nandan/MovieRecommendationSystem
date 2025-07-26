@@ -59,7 +59,7 @@ conda env create -f environment.yml
 ```
 
 ```bash
-conda activate movie_rec_env
+conda activate movie_rec
 ```
 
 ### 3. Prepare Data & Models
