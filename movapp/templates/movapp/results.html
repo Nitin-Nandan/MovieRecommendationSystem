@@ -100,7 +100,7 @@
         </div>
         {% endif %}
 
-        <!-- Dual-Mode Export Options Section -->
+        <!-- Simple Export Options Section -->
         <div style="margin-top: 40px; padding: 25px; background: var(--card-bg); border-radius: 15px; border: 2px solid var(--accent-primary); text-align: center;">
             <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 1.2em;">
                 <i class="fas fa-download"></i> Export Your Recommendations
@@ -112,30 +112,25 @@
                     <i class="fas fa-file-csv"></i> Export as CSV
                 </a>
 
-                <!-- PDF Fun Mode Button -->
-                <a href="#" id="export-pdf-fun-btn" class="export-btn" style="background: linear-gradient(45deg, #FFD700, #FFA500); color: #2C3E50; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <i class="fas fa-jedi"></i> Fun Mode PDF
-                </a>
-
-                <!-- PDF Pro Mode Button -->
-                <a href="#" id="export-pdf-pro-btn" class="export-btn" style="background: linear-gradient(45deg, #2C3E50, #34495E); color: white; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <i class="fas fa-file-pdf"></i> Pro Mode PDF
+                <!-- PDF Export Button -->
+                <a href="#" id="export-pdf-btn" class="export-btn" style="background: linear-gradient(45deg, #dc3545, #c82333); color: white; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-file-pdf"></i> Export as PDF
                 </a>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 11px; color: var(--text-muted);">
                 <div style="text-align: center;">
-                    <strong>Fun Mode:</strong><br>
-                    Star Wars themed • Creative headers • Perfect for demos
+                    <strong>CSV Export:</strong><br>
+                    Data analysis ready • Spreadsheet compatible
                 </div>
                 <div style="text-align: center;">
-                    <strong>Pro Mode:</strong><br>
-                    Professional format • Business ready • Clean design
+                    <strong>PDF Export:</strong><br>
+                    Professional format • Presentation ready
                 </div>
             </div>
 
             <p style="color: var(--text-muted); font-size: 12px; margin-top: 15px; font-style: italic;">
-                <i class="fas fa-info-circle"></i> Choose your preferred export style for different occasions!
+                <i class="fas fa-info-circle"></i> Choose your preferred export format!
             </p>
         </div>
 
@@ -187,8 +182,7 @@
             <h4 style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">Export Options</h4>
             <div style="background: var(--card-bg); padding: 15px; border-radius: 10px;">
                 <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;"><i class="fas fa-file-csv"></i> Data analysis (CSV)</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;"><i class="fas fa-jedi"></i> Star Wars themed (Fun)</div>
-                <div style="font-size: 11px; color: var(--text-muted);"><i class="fas fa-briefcase"></i> Professional reports (Pro)</div>
+                <div style="font-size: 11px; color: var(--text-muted);"><i class="fas fa-file-pdf"></i> Professional reports (PDF)</div>
             </div>
         </div>
     </div>
@@ -601,7 +595,7 @@
         return cookieValue;
     }
 
-    // Export functionality - Clean approach
+    // Export functionality - Simplified approach
     document.addEventListener('DOMContentLoaded', function () {
         function buildExportUrl(baseUrl) {
             const params = new URLSearchParams();
@@ -632,21 +626,12 @@
             });
         }
 
-        // PDF Fun Mode Export
-        const pdfFunBtn = document.getElementById('export-pdf-fun-btn');
-        if (pdfFunBtn) {
-            pdfFunBtn.addEventListener('click', function (e) {
+        // PDF Export
+        const pdfBtn = document.getElementById('export-pdf-btn');
+        if (pdfBtn) {
+            pdfBtn.addEventListener('click', function (e) {
                 e.preventDefault();
-                window.location.href = buildExportUrl('/export/pdf/fun/');
-            });
-        }
-
-        // PDF Pro Mode Export
-        const pdfProBtn = document.getElementById('export-pdf-pro-btn');
-        if (pdfProBtn) {
-            pdfProBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                window.location.href = buildExportUrl('/export/pdf/pro/');
+                window.location.href = buildExportUrl('/export/pdf/');
             });
         }
 
@@ -661,10 +646,8 @@
                 this.style.transform = 'translateY(0)';
                 if (this.id.includes('csv')) {
                     this.style.boxShadow = '0 5px 15px rgba(40, 167, 69, 0.3)';
-                } else if (this.id.includes('fun')) {
-                    this.style.boxShadow = '0 5px 15px rgba(255, 215, 0, 0.3)';
                 } else {
-                    this.style.boxShadow = '0 5px 15px rgba(44, 62, 80, 0.3)';
+                    this.style.boxShadow = '0 5px 15px rgba(220, 53, 69, 0.3)';
                 }
             });
         });

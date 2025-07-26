@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views, export_views, analytics_views
 
+
 urlpatterns = [
     path('', views.home, name='home'),
     path('search/', views.search_movies, name='search_movies'),
@@ -14,8 +15,7 @@ urlpatterns = [
     
     # Export endpoints
     path('export/csv/', export_views.export_recommendations_csv, name='export_csv'),
-    path('export/pdf/fun/', export_views.export_recommendations_pdf_fun, name='export_pdf_fun'),
-    path('export/pdf/pro/', export_views.export_recommendations_pdf_pro, name='export_pdf_pro'),
+    path('export/pdf/', export_views.export_recommendations_pdf, name='export_pdf'),
     
     # Analytics endpoints
     path('analytics/', analytics_views.analytics_dashboard, name='analytics'),
