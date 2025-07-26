@@ -207,5 +207,9 @@ dependencies:
   - zlib=1.2.13=h5eee18b_1
   - zstd=1.5.6=hc292b87_0
   - pip:
+      - fuzzywuzzy==0.18.0
+      - levenshtein==0.27.1
+      - python-levenshtein==0.27.1
+      - rapidfuzz==3.13.0
       - scikit-surprise==1.1.4
-prefix: /home/nitin/anaconda3/envs/movie_rec_env
+prefix: /home/nitin/anaconda3/envs/movie_rec

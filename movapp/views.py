@@ -4,6 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 import json
 from .data_loader import movie_data_loader
+from fuzzywuzzy import fuzz, process
+
 
 def home(request):
     """Homepage view for the Movie Recommendation System"""
@@ -65,6 +67,7 @@ def home(request):
             })
     
     return render(request, 'movapp/home.html')
+
 
 def load_more_recommendations(request):
     """AJAX endpoint for loading more recommendations (infinite scroll)"""
@@ -169,6 +172,7 @@ def load_more_recommendations(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
+
 def get_movie_poster(request):
     """
     NEW: AJAX endpoint for lazy loading individual movie posters
@@ -206,9 +210,10 @@ def get_movie_poster(request):
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
+
 def search_movies(request):
-    """AJAX endpoint for movie search with filter support"""
-    query = request.GET.get('q', '')
+    """Enhanced AJAX endpoint for movie search with keyword and fuzzy matching"""
+    query = request.GET.get('q', '').strip()
     if len(query) < 2:
         return JsonResponse({'movies': []})
     
@@ -223,8 +228,138 @@ def search_movies(request):
     # Clean empty values
     filters = {k: v for k, v in filters.items() if v and v != '0'}
     
-    matches = movie_data_loader.search_movies(query, filters, limit=10)
-    return JsonResponse({'movies': matches})
+    print(f"🔍 Enhanced search for: '{query}'")
+    
+    try:
+        # Strategy 1: Use your existing search method with larger limit
+        original_matches = movie_data_loader.search_movies(query, filters, limit=100)
+        print(f"📚 Original search found: {len(original_matches)} matches")
+        
+        # Strategy 2: Enhance results with keyword and number conversion
+        enhanced_results = []
+        query_lower = query.lower()
+        
+        # Convert numbers to words for searches like "three idiots" → "3 idiots"
+        converted_query = _convert_numbers_words(query_lower)
+        
+        # Also search with converted query if different
+        if converted_query != query_lower:
+            print(f"🔄 Also searching for converted: '{converted_query}'")
+            converted_matches = movie_data_loader.search_movies(converted_query, filters, limit=50)
+            original_matches.extend(converted_matches)
+            print(f"📚 Total after conversion search: {len(original_matches)} matches")
+        
+        # Strategy 3: Add keyword-based enhancement
+        for movie in original_matches:
+            movie_lower = movie.lower()
+            
+            # Direct matches (already found by original search)
+            if query_lower in movie_lower or converted_query in movie_lower:
+                enhanced_results.append(movie)
+            
+            # Keyword matching for themes like "indian", "marvel", "bollywood"
+            elif _matches_keywords(query_lower, movie_lower):
+                enhanced_results.append(movie)
+            
+            # Add original matches that might not fit above categories
+            else:
+                enhanced_results.append(movie)
+        
+        # Strategy 4: If we have limited results, try fuzzy matching
+        if len(enhanced_results) < 5 and original_matches:
+            print(f"🎯 Applying fuzzy matching for better results")
+            fuzzy_matches = process.extract(
+                query, 
+                original_matches, 
+                limit=10, 
+                scorer=fuzz.token_sort_ratio
+            )
+            
+            # Add fuzzy matches with decent similarity
+            for match in fuzzy_matches:
+                if match[1] > 50 and match[0] not in enhanced_results:
+                    enhanced_results.append(match[0])
+        
+        # Remove duplicates while preserving order
+        unique_results = []
+        seen = set()
+        for movie in enhanced_results:
+            if movie not in seen:
+                unique_results.append(movie)
+                seen.add(movie)
+        
+        # Limit to top 10 results
+        final_results = unique_results[:10]
+        
+        print(f"✅ Enhanced search results: {len(final_results)} movies")
+        return JsonResponse({'movies': final_results})
+        
+    except Exception as e:
+        print(f"❌ Error in enhanced search: {str(e)}")
+        # Fallback to your original search method
+        try:
+            fallback_matches = movie_data_loader.search_movies(query, filters, limit=10)
+            return JsonResponse({'movies': fallback_matches})
+        except:
+            return JsonResponse({'movies': []})
+
+
+def _convert_numbers_words(query):
+    """Convert between numbers and words for better matching"""
+    # Convert words to numbers
+    word_to_number = {
+        'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
+        'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10'
+    }
+    
+    # Convert numbers to words  
+    number_to_word = {
+        '1': 'one', '2': 'two', '3': 'three', '4': 'four', '5': 'five',
+        '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine', '10': 'ten'
+    }
+    
+    result = query
+    
+    # Try both conversions
+    for word, num in word_to_number.items():
+        result = result.replace(word, num)
+    
+    # If no word-to-number conversion happened, try number-to-word
+    if result == query:
+        for num, word in number_to_word.items():
+            result = result.replace(num, word)
+    
+    return result
+
+
+def _matches_keywords(query, movie_title):
+    """Enhanced keyword matching for themes and franchises"""
+    
+    # Define comprehensive keyword mappings
+    keyword_mappings = {
+        # Indian/Bollywood cinema
+        'indian': ['bollywood', 'hindi', 'india', 'mumbai', 'delhi', 'punjabi', 'tamil', 'telugu'],
+        'bollywood': ['hindi', 'mumbai', 'india', 'bollywood'],
+        'hindi': ['bollywood', 'india', 'hindi'],
+        
+        # Marvel/Superhero
+        'marvel': ['spider', 'iron', 'captain', 'thor', 'hulk', 'avengers', 'ant-man', 'guardians', 'doctor strange', 'black panther'],
+        'superhero': ['spider', 'batman', 'superman', 'captain', 'iron', 'thor', 'hulk', 'wonder woman'],
+        'avengers': ['iron', 'captain', 'thor', 'hulk', 'black widow', 'hawkeye'],
+        
+        # Other franchises  
+        'disney': ['pixar', 'princess', 'toy story', 'frozen', 'moana'],
+        'pixar': ['toy story', 'cars', 'monsters', 'finding', 'incredibles'],
+        'horror': ['nightmare', 'friday', 'halloween', 'scream', 'saw', 'conjuring'],
+        'comedy': ['hangover', 'dumb', 'american pie', 'meet the'],
+    }
+    
+    # Check if query matches any keyword category
+    if query in keyword_mappings:
+        keywords_to_check = keyword_mappings[query] + [query]
+        return any(keyword in movie_title for keyword in keywords_to_check)
+    
+    return False
 
 def filter_recommendations(request):
     """AJAX endpoint for live filtering of recommendations"""
